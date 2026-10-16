@@ -21,18 +21,18 @@ class SlotKey(NamedTuple):
     provider_pubkey: str
 
 
+class Reason(NamedTuple):
+    code: int | None
+    at: datetime | None
+
+
 class BagSlotRepo(BaseRepo[BagSlotModel]):
     model = BagSlotModel
 
-    async def reasoned_keys(self) -> set[SlotKey]:
-        stmt = select(BagSlotModel.address, BagSlotModel.provider_pubkey).where(BagSlotModel.reason.is_not(None))
+    async def reasons(self) -> dict[SlotKey, Reason]:
+        stmt = select(BagSlotModel.address, BagSlotModel.provider_pubkey, BagSlotModel.reason, BagSlotModel.reason_at)
         result = await self.session.execute(stmt)
-        return {SlotKey(row.address, row.provider_pubkey) for row in result}
-
-    async def keys(self) -> set[SlotKey]:
-        stmt = select(BagSlotModel.address, BagSlotModel.provider_pubkey)
-        result = await self.session.execute(stmt)
-        return {SlotKey(row.address, row.provider_pubkey) for row in result}
+        return {SlotKey(row.address, row.provider_pubkey): Reason(row.reason, row.reason_at) for row in result}
 
     async def count(self) -> int:
         return await self.session.scalar(select(func.count()).select_from(BagSlotModel)) or 0
