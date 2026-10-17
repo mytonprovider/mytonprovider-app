@@ -9,23 +9,6 @@ from app import config
 
 STARTED = time.monotonic()
 
-
-def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def format_amount(value: float, digits: int = 2, sign: bool = False) -> str:
-    spec = f"+.{digits}f" if sign else f".{digits}f"
-    text = f"{value:{spec}}"
-    return text.rstrip("0").rstrip(".") if "." in text else text
-
-
-# Money is written the same way everywhere - app, bot and admin panel: nanoton in,
-# four decimals out, trailing zeros trimmed.
-def format_gram(value: int, digits: int = 4, sign: bool = False) -> str:
-    return f"{format_amount(value / 1e9, digits=digits, sign=sign)} GRAM"
-
-
 # One scale for the whole project: divisor 1024, Latin labels, no GiB/MiB on screen.
 # The price is accepted: a file Finder shows as 4.28 GB reads as 3.99 GB here.
 SIZE_UNITS = ((1024**4, "TB"), (1024**3, "GB"), (1024**2, "MB"), (1024, "KB"))
@@ -41,6 +24,25 @@ BITS_IN_BYTE = 8
 BITS_IN_MBIT = 10**6
 MIBIT_IN_MBIT = 1024**2 / 10**6
 
+ADDRESS_EXPLORERS = {
+    "tonscan": "https://tonscan.org/address/{address}",
+    "tonviewer": "https://tonviewer.com/{address}",
+}
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def format_amount(value: float, digits: int = 2, sign: bool = False) -> str:
+    spec = f"+.{digits}f" if sign else f".{digits}f"
+    text = f"{value:{spec}}"
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def format_gram(value: int, digits: int = 4, sign: bool = False) -> str:
+    return f"{format_amount(value / 1e9, digits=digits, sign=sign)} GRAM"
+
 
 def format_size(value: int, sign: bool = False, units: tuple[tuple[int, str], ...] = SIZE_UNITS) -> str:
     for scale, unit in units:
@@ -53,12 +55,6 @@ def format_size(value: int, sign: bool = False, units: tuple[tuple[int, str], ..
 
 def format_space(value: int, sign: bool = False) -> str:
     return format_size(value, sign=sign, units=SPACE_UNITS)
-
-
-ADDRESS_EXPLORERS = {
-    "tonscan": "https://tonscan.org/address/{address}",
-    "tonviewer": "https://tonviewer.com/{address}",
-}
 
 
 def address_url(explorer: str, address: str) -> str:
