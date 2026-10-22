@@ -86,9 +86,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
   useTrusted.getState().setAll(profile.trusted_addresses);
   useChannels.getState().setAll(profile.channels);
   useNames.getState().setAll(profile.names.providers, profile.names.addresses);
-  useSubscriptions
-    .getState()
-    .setAll(profile.subscriptions.map((s) => ({ pubkey: s.pubkey, alertsEnabled: s.alerts_enabled })));
+  useSubscriptions.getState().setAll(profile.subscriptions.map((s) => s.pubkey));
   const { types, thresholds } = toAlertMaps(profile.alerts);
   useAlerts.getState().setAll(profile.alerts.enabled, types, thresholds);
   if (adoptPreferences) {
@@ -125,12 +123,6 @@ export function setAddressName(address: string, name: string): void {
   useNames.getState().setAddress(address, name);
   const names = namesPayload();
   queue("names sync", () => backend.putNames(names));
-}
-
-export function toggleBell(pubkey: string): void {
-  useSubscriptions.getState().toggleAlert(pubkey);
-  const enabled = !useSubscriptions.getState().alertsOff.includes(pubkey);
-  queue("subscription patch", () => backend.patchSubscription(pubkey, enabled));
 }
 
 export function unsubscribeProvider(pubkey: string): void {

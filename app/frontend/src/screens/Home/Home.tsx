@@ -6,7 +6,7 @@ import { RoundToggle } from "@/components/RoundToggle";
 import { TabPager } from "@/components/TabPager";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
 import { countActiveFilters, selectCatalog } from "@/data/query";
-import { hydrateFromServer, toggleBell, toggleFavorite } from "@/data/sync";
+import { hydrateFromServer, toggleFavorite } from "@/data/sync";
 import type { Provider } from "@/data/types";
 import type { ReactNode } from "react";
 import { useT } from "@/i18n";
@@ -57,7 +57,6 @@ export function Home() {
   const names = useNames((s) => s.providers);
   const loggedIn = useAuth((s) => s.loggedIn);
   const subscribed = useSubscriptions((s) => s.subscribed);
-  const alertsOff = useSubscriptions((s) => s.alertsOff);
 
   const panes = useRef<Record<string, HTMLDivElement | null>>({});
   const reloadTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -137,19 +136,6 @@ export function Home() {
     />
   );
 
-  const bellToggle = (provider: Provider) => (
-    <RoundToggle
-      glyph="bell"
-      size={17}
-      active={!alertsOff.includes(provider.pubkey)}
-      ariaLabel={t.notifBtn}
-      onClick={(event) => {
-        event.stopPropagation();
-        toggleBell(provider.pubkey);
-      }}
-    />
-  );
-
   const listHero = <Callout hero icon={<TonLogo />} title={t.mainTitle} desc={t.mainDesc} />;
 
   const subsHero = <Callout hero glyph="bell" title={t.subsTitle} desc={t.subsDesc} />;
@@ -224,7 +210,7 @@ export function Home() {
           loading={subsLoading}
           skeletonCount={rows.length || (hydrated ? Math.min(subscribed.length, listShapes.subs.shown) : PENDING_ROWS)}
           rows={rows}
-          trailing={bellToggle}
+          trailing={starToggle}
           fallback={
             !loggedIn ? (
               state("subs", t.loginNeeded, <TelegramLoginButton />)

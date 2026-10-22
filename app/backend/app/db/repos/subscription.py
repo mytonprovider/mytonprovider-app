@@ -35,7 +35,6 @@ class SubscriptionRepo(BaseRepo[SubscriptionModel]):
                 UserModel.alerts_enabled.is_(True),
                 UserModel.state == "member",
                 UserModel.banned_at.is_(None),
-                SubscriptionModel.alerts_enabled.is_(True),
                 SubscriptionModel.telemetry_pass.is_not_distinct_from(ProviderModel.telemetry_pass),
             )
         )

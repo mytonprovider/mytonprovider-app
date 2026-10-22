@@ -236,7 +236,6 @@ export const en = {
     reports: "Reports",
   },
   save: "Save settings",
-  notifBtn: "Notifications",
   alertNames: {
     telemetry_lost: "No telemetry",
     not_online: "Not online",

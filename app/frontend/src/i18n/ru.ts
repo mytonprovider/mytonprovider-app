@@ -240,7 +240,6 @@ export const ru: Dict = {
     reports: "Отчёты",
   },
   save: "Сохранить",
-  notifBtn: "Уведомления",
   alertNames: {
     telemetry_lost: "Нет телеметрии",
     not_online: "Не в сети",

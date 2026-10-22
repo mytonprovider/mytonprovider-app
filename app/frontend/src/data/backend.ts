@@ -41,7 +41,6 @@ type ServerTheme = Theme | "auto";
 
 interface SubscriptionEntry {
   pubkey: string;
-  alerts_enabled: boolean;
 }
 
 export interface NamesPayload {
@@ -270,11 +269,6 @@ export const backend = {
       body: JSON.stringify({ pubkey, password }),
     }),
   unsubscribe: (pubkey: string) => request<void>(`/api/v1/profile/subscriptions/${pubkey}`, { method: "DELETE" }),
-  patchSubscription: (pubkey: string, alertsEnabled: boolean) =>
-    request<SubscriptionEntry>(`/api/v1/profile/subscriptions/${pubkey}`, {
-      method: "PATCH",
-      body: JSON.stringify({ alerts_enabled: alertsEnabled }),
-    }),
   provider: (pubkey: string) => request<ProviderPayload>(`/api/v1/provider/${pubkey}`),
   providerStats: (pubkey: string, period: string) =>
     request<StatsPayload>(`/api/v1/provider/${pubkey}/stats?period=${period}`),
