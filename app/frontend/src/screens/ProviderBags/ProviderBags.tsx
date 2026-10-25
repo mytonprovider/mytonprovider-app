@@ -14,6 +14,7 @@ import { toUserFriendly } from "@/lib/address";
 import { SC } from "@/lib/colors";
 import { EMPTY, ago, formatBytes, shorten } from "@/lib/format";
 import { bagGatewayUrl } from "@/lib/gateway";
+import { onRevalidate } from "@/lib/revalidate";
 import { COLD_CARDS } from "@/lib/skeletons";
 import { describeStatus, filterColor, reasonText, reasonTone, stateText, stateTone } from "@/lib/status";
 import { useCatalog } from "@/stores/catalog";
@@ -61,7 +62,9 @@ export function ProviderBags() {
 
   useEffect(() => {
     setFailed(false);
-    loadBucket(pubkey, state).catch(() => setFailed(true));
+    const reload = () => loadBucket(pubkey, state).catch(() => setFailed(true));
+    void reload();
+    return onRevalidate(() => void reload());
   }, [pubkey, state, loadBucket]);
 
   // The bucket is in memory, so the search filters it instead of asking the server: no

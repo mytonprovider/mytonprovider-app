@@ -52,7 +52,14 @@ function namesPayload(): NamesPayload {
   return { providers, addresses };
 }
 
+// The profile carries settings someone changed on another device, so a tick asks for it on the
+// same terms as the catalogue. A login adopts preferences and has to read through; a failed read
+// leaves the mark alone, so a retry is never held back.
+const STALE_MS = 120_000;
+let profileAt = 0;
+
 export async function hydrateFromServer(adoptPreferences = false): Promise<void> {
+  if (!adoptPreferences && Date.now() - profileAt < STALE_MS) return;
   flushAlerts();
   await chain;
   let profile: Awaited<ReturnType<typeof backend.profile>>;
@@ -82,6 +89,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
     }
     localStorage.setItem(MIGRATED_KEY, "1");
   }
+  profileAt = Date.now();
   useFavorites.getState().setAll(profile.favorites);
   useTrusted.getState().setAll(profile.trusted_addresses);
   useChannels.getState().setAll(profile.channels);

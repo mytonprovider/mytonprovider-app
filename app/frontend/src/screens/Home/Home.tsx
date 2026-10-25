@@ -27,7 +27,6 @@ import styles from "./Home.module.css";
 import { ProviderPane } from "./ProviderPane";
 import { TonLogo } from "./TonLogo";
 
-const RELOAD_SPIN_MS = 1100;
 const SCROLL_TOP_THRESHOLD = 360;
 const PENDING_ROWS = 4;
 const TABS = ["subs", "list", "fav"] as const;
@@ -58,12 +57,9 @@ export function Home() {
   const subscribed = useSubscriptions((s) => s.subscribed);
 
   const panes = useRef<Record<string, HTMLDivElement | null>>({});
-  const reloadTimer = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(reloadTimer.current), []);
   const [progress, setProgress] = useState(TABS.indexOf(tab));
   const [showTop, setShowTop] = useState(false);
   const scrubRef = useRef<(position: number | null) => void>(() => {});
-  const [spinning, setSpinning] = useState(false);
 
   useEffect(() => {
     void load();
@@ -88,28 +84,21 @@ export function Home() {
 
   const hydrated = useSyncExternalStore(onHydrated, isHydrated);
   const activeFilters = countActiveFilters(filters);
-  const initialLoading = status !== "ready" && status !== "error";
   // Skeletons only while there is nothing to show: a refresh runs through the same "loading"
   // status, and a screenful of placeholders over a scrolled list threw it back, 6000px to 547px.
-  const loading = (spinning || initialLoading) && providers.length === 0;
+  const loading = status !== "ready" && status !== "error" && providers.length === 0;
   const subsLoading = !hydrated || (loggedIn && loading && subscribed.length > 0);
   const favLoading = !hydrated || (loading && favorites.length > 0);
   const isError = status === "error" && providers.length === 0;
 
+  // Retry after a failed load: data refreshes itself on focus and on a tick, so this is the only
+  // thing left that asks for it by hand.
   const onReload = () => {
-    if (spinning) return;
-    setSpinning(true);
-    const startedAt = performance.now();
-    void reload()
-      .then((ok) => {
-        if (!ok) notify("error");
-      })
-      .finally(() => {
-        const rest = Math.max(0, RELOAD_SPIN_MS - (performance.now() - startedAt));
-        reloadTimer.current = setTimeout(() => setSpinning(false), rest);
-      });
+    void reload().then((ok) => {
+      if (!ok) notify("error");
+    });
     if (useAuth.getState().hasSession) {
-      hydrateFromServer().catch((error: unknown) => console.error("reload sync failed", error));
+      hydrateFromServer().catch((error: unknown) => console.error("retry sync failed", error));
     }
   };
 
@@ -265,11 +254,6 @@ export function Home() {
           }
         />
         <div className={styles.navActions}>
-          <button type="button" aria-label="Refresh" className={styles.headerBtn} onClick={onReload}>
-            <span className={spinning ? styles.spin : undefined}>
-              <Icon glyph="reload" size={20} color="var(--ts-hint)" />
-            </span>
-          </button>
           <button type="button" aria-label={t.settings} className={styles.headerBtn} onClick={() => navigate("/menu")}>
             <Icon glyph="menu" size={22} color="var(--ts-hint)" />
           </button>

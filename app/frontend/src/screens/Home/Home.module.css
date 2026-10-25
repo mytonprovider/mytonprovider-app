@@ -36,12 +36,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.spin {
-  composes: spin from "../../styles/anim.module.css";
-  display: inline-flex;
-}
-
-
 
 .searchClear {
   composes: clear from "../../styles/list.module.css";
