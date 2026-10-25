@@ -12,11 +12,12 @@ import type { ReactNode } from "react";
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { reducedMotion } from "@/lib/motion";
+import { COLD_ROWS } from "@/lib/skeletons";
 import { notify } from "@/lib/telegram";
 import { isHydrated, onHydrated } from "@/lib/storage";
 import { useAuth } from "@/stores/auth";
 import { useCatalog } from "@/stores/catalog";
-import { type Tab, listShapes, rememberShape, useCatalogQuery } from "@/stores/catalogQuery";
+import { type Tab, useCatalogQuery } from "@/stores/catalogQuery";
 import { useFavorites } from "@/stores/favorites";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
@@ -46,11 +47,9 @@ export function Home() {
   const search = useCatalogQuery((s) => s.search);
   const sort = useCatalogQuery((s) => s.sort);
   const filters = useCatalogQuery((s) => s.filters);
-  const visible = useCatalogQuery((s) => s.visible);
   const setTab = useCatalogQuery((s) => s.setTab);
   const setSearch = useCatalogQuery((s) => s.setSearch);
   const setSortField = useCatalogQuery((s) => s.setSortField);
-  const loadMore = useCatalogQuery((s) => s.loadMore);
   const resetFilters = useCatalogQuery((s) => s.resetFilters);
 
   const favorites = useFavorites((s) => s.favorites);
@@ -90,7 +89,9 @@ export function Home() {
   const hydrated = useSyncExternalStore(onHydrated, isHydrated);
   const activeFilters = countActiveFilters(filters);
   const initialLoading = status !== "ready" && status !== "error";
-  const loading = spinning || initialLoading;
+  // Skeletons only while there is nothing to show: a refresh runs through the same "loading"
+  // status, and a screenful of placeholders over a scrolled list threw it back, 6000px to 547px.
+  const loading = (spinning || initialLoading) && providers.length === 0;
   const subsLoading = !hydrated || (loggedIn && loading && subscribed.length > 0);
   const favLoading = !hydrated || (loading && favorites.length > 0);
   const isError = status === "error" && providers.length === 0;
@@ -166,15 +167,6 @@ export function Home() {
 
   const query = search.trim();
 
-  // Plain lists only: a search or a filter narrows the tab for a moment, and that length
-  // says nothing about how far the owner had scrolled.
-  useEffect(() => {
-    if (query || activeFilters > 0) return;
-    if (!loading) rememberShape("list", Math.min(visible.list, listItems.length), listItems.length);
-    if (!favLoading) rememberShape("fav", Math.min(visible.fav, favItems.length), favItems.length);
-    if (!subsLoading) rememberShape("subs", Math.min(visible.subs, subItems.length), subItems.length);
-  }, [query, activeFilters, loading, favLoading, subsLoading, visible, listItems, favItems, subItems]);
-
   const marks = {
     subs: { glyph: "bell" as const, title: t.subsTitle },
     list: { icon: <TonLogo />, title: t.mainTitle },
@@ -201,15 +193,14 @@ export function Home() {
 
   const pane = (key: Tab) => {
     if (key === "subs") {
-      const rows = subItems.slice(0, visible.subs);
       return (
         <ProviderPane
           hero={subItems.length > 0 || subsLoading ? subsHero : undefined}
           toolbar={subsToolbar}
-          count={loggedIn && subItems.length > 0 ? t.showing(rows.length, subItems.length) : null}
+          count={loggedIn && subItems.length > 0 ? t.found(subItems.length) : null}
           loading={subsLoading}
-          skeletonCount={rows.length || (hydrated ? Math.min(subscribed.length, listShapes.subs.shown) : PENDING_ROWS)}
-          rows={rows}
+          skeletonCount={hydrated ? Math.min(subscribed.length, COLD_ROWS) : PENDING_ROWS}
+          rows={subItems}
           trailing={starToggle}
           fallback={
             !loggedIn ? (
@@ -225,29 +216,21 @@ export function Home() {
             )
           }
           onOpen={openProvider}
-          onLoadMore={subItems.length > rows.length ? () => loadMore("subs") : undefined}
-          expectMore={subItems.length > rows.length || listShapes.subs.total > listShapes.subs.shown}
         />
       );
     }
 
     const items = key === "fav" ? favItems : listItems;
-    const rows = items.slice(0, visible[key]);
     return (
       <ProviderPane
         hero={items.length > 0 || (key === "fav" ? favLoading : loading) ? (key === "fav" ? favHero : listHero) : undefined}
         toolbar={key === "fav" ? favToolbar : listToolbar}
-        count={items.length > 0 ? t.showing(rows.length, items.length) : null}
+        count={items.length > 0 ? t.found(items.length) : null}
         loading={key === "fav" ? favLoading : loading}
         skeletonCount={
-          rows.length ||
-          (key === "fav"
-            ? hydrated
-              ? Math.min(favorites.length, listShapes.fav.shown)
-              : PENDING_ROWS
-            : listShapes.list.shown)
+          key === "fav" ? (hydrated ? Math.min(favorites.length, COLD_ROWS) : PENDING_ROWS) : COLD_ROWS
         }
-        rows={rows}
+        rows={items}
         trailing={starToggle}
         fallback={
           isError ? (
@@ -261,8 +244,6 @@ export function Home() {
           )
         }
         onOpen={openProvider}
-        onLoadMore={items.length > rows.length ? () => loadMore(key) : undefined}
-        expectMore={items.length > rows.length || listShapes[key].total > listShapes[key].shown}
       />
     );
   };

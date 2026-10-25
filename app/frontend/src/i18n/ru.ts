@@ -23,7 +23,6 @@ export const ru: Dict = {
   searchSubs: "Поиск в подписках",
   searchFav: "Поиск в избранном",
   searchEmpty: "На этой вкладке ничего не найдено",
-  loadMore: "Показать ещё",
   providersNotFound: "Нет провайдеров по этим фильтрам",
   loadError: "Не удалось загрузить провайдеров",
   ownerFailed: "Не удалось загрузить данные",
@@ -225,6 +224,7 @@ export const ru: Dict = {
   pingF: "Пинг",
   unitDays: "дн",
   searchInCatalog: (n: number) => `Показать в каталоге: ${n}`,
+  found: (total: number) => `${total} ${pluralRu(total, "провайдер", "провайдера", "провайдеров")}`,
   showing: (shown: number, total: number) =>
     `Показано ${shown} из ${total} ${pluralRu(total, "провайдера", "провайдеров", "провайдеров")}`,
   showResults: (n: number) => `Показать ${n}`,
