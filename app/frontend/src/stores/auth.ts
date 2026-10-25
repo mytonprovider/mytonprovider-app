@@ -54,7 +54,6 @@ export const useAuth = create<AuthState>()(
       name: "mtp-auth",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ loggedIn: state.loggedIn, user: state.user }),
-      skipHydration: true,
     },
   ),
 );

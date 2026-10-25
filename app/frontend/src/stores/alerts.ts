@@ -5,7 +5,6 @@ import {
   defaultThresholds,
 } from "@/data/alerts";
 import type { AlertKey } from "@/i18n/types";
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -19,8 +18,6 @@ interface AlertsState {
   setAll: (enabled: boolean, types: AlertTypeMap, thresholds: ThresholdMap) => void;
 }
 
-const persistOptions = appPersist<AlertsState>("mtp-alerts");
-
 export const useAlerts = create<AlertsState>()(
   persist(
     (set) => ({
@@ -33,9 +30,9 @@ export const useAlerts = create<AlertsState>()(
       setAll: (enabled, types, thresholds) => set({ enabled, types, thresholds }),
     }),
     {
-      ...persistOptions,
+      name: "mtp-alerts",
       merge: (persisted, current) => {
-        const state = persistOptions.merge!(persisted, current);
+        const state = { ...current, ...(persisted as Partial<AlertsState>) };
         return { ...state, types: { ...defaultAlertTypes(), ...state.types } };
       },
     },

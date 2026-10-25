@@ -4,17 +4,11 @@ import { invalidateOwner } from "@/hooks/useOwnerData";
 import { useCatalog } from "@/stores/catalog";
 import { type Tab, rememberStartTab } from "@/stores/catalogQuery";
 import { getTelegramUser, initTelegram, isInTelegram } from "@/lib/telegram";
-import { hydrateStores } from "@/lib/storage";
 import { onRevalidate, revalidate } from "@/lib/revalidate";
-import { useAlerts } from "@/stores/alerts";
 import { makeAuthUser, useAuth } from "@/stores/auth";
 import { useFavorites } from "@/stores/favorites";
-import { useNames } from "@/stores/names";
-import { useSettings } from "@/stores/settings";
 import { useSubscriptions } from "@/stores/subscriptions";
-import { useTrusted } from "@/stores/trusted";
 
-const PERSISTED_STORES = [useSettings, useFavorites, useNames, useSubscriptions, useTrusted, useAlerts, useAuth];
 const POLL_MS = 60_000;
 
 function usefulTab(): Tab {
@@ -65,9 +59,6 @@ function registerRevalidation(): void {
 }
 
 async function runBootSequence(): Promise<void> {
-  const hydration = hydrateStores(PERSISTED_STORES);
-  if (isInTelegram()) applyTelegramLogin();
-  await hydration;
   if (isInTelegram()) applyTelegramLogin();
   trackStartTab();
   await establishSession();

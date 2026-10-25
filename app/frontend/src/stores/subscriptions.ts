@@ -1,4 +1,3 @@
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -21,6 +20,6 @@ export const useSubscriptions = create<SubscriptionsState>()(
         set((state) => ({ subscribed: state.subscribed.filter((p) => p !== pubkey) })),
       setAll: (pubkeys) => set({ subscribed: pubkeys }),
     }),
-    appPersist("mtp-subscriptions"),
+    { name: "mtp-subscriptions" },
   ),
 );

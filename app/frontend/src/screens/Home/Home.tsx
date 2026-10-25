@@ -14,21 +14,19 @@ import { cx } from "@/lib/cx";
 import { reducedMotion } from "@/lib/motion";
 import { COLD_ROWS } from "@/lib/skeletons";
 import { notify } from "@/lib/telegram";
-import { isHydrated, onHydrated } from "@/lib/storage";
 import { useAuth } from "@/stores/auth";
 import { useCatalog } from "@/stores/catalog";
 import { type Tab, useCatalogQuery } from "@/stores/catalogQuery";
 import { useFavorites } from "@/stores/favorites";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Home.module.css";
 import { ProviderPane } from "./ProviderPane";
 import { TonLogo } from "./TonLogo";
 
 const SCROLL_TOP_THRESHOLD = 360;
-const PENDING_ROWS = 4;
 const TABS = ["subs", "list", "fav"] as const;
 
 export function Home() {
@@ -82,13 +80,12 @@ export function Home() {
     [loggedIn, providers, subscribed, search, filters, sort, names, bounds],
   );
 
-  const hydrated = useSyncExternalStore(onHydrated, isHydrated);
   const activeFilters = countActiveFilters(filters);
   // Skeletons only while there is nothing to show: a refresh runs through the same "loading"
   // status, and a screenful of placeholders over a scrolled list threw it back, 6000px to 547px.
   const loading = status !== "ready" && status !== "error" && providers.length === 0;
-  const subsLoading = !hydrated || (loggedIn && loading && subscribed.length > 0);
-  const favLoading = !hydrated || (loading && favorites.length > 0);
+  const subsLoading = loggedIn && loading && subscribed.length > 0;
+  const favLoading = loading && favorites.length > 0;
   const isError = status === "error" && providers.length === 0;
 
   // Retry after a failed load: data refreshes itself on focus and on a tick, so this is the only
@@ -188,7 +185,7 @@ export function Home() {
           toolbar={subsToolbar}
           count={loggedIn && subItems.length > 0 ? t.found(subItems.length) : null}
           loading={subsLoading}
-          skeletonCount={hydrated ? Math.min(subscribed.length, COLD_ROWS) : PENDING_ROWS}
+          skeletonCount={Math.min(subscribed.length, COLD_ROWS)}
           rows={subItems}
           trailing={starToggle}
           fallback={
@@ -216,9 +213,7 @@ export function Home() {
         toolbar={key === "fav" ? favToolbar : listToolbar}
         count={items.length > 0 ? t.found(items.length) : null}
         loading={key === "fav" ? favLoading : loading}
-        skeletonCount={
-          key === "fav" ? (hydrated ? Math.min(favorites.length, COLD_ROWS) : PENDING_ROWS) : COLD_ROWS
-        }
+        skeletonCount={key === "fav" ? Math.min(favorites.length, COLD_ROWS) : COLD_ROWS}
         rows={items}
         trailing={starToggle}
         fallback={
