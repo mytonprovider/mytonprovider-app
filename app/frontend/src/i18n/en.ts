@@ -16,6 +16,7 @@ export const en = {
   fav: "Favorites",
   filters: "Filters",
   sortBy: "Sort by",
+  done: "Done",
   searchPlaceholder: "Search by name or key",
   searchSubs: "Search subscriptions",
   searchFav: "Search favorites",
@@ -289,6 +290,10 @@ export const en = {
     uptime: "Uptime",
     price: "Price",
     working_time: "Working time",
+  },
+  sortDir: {
+    desc: "descending",
+    asc: "ascending",
   },
   status: {
     noData: "No Data",

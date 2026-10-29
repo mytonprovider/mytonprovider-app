@@ -19,6 +19,7 @@ export const ru: Dict = {
   fav: "Избранное",
   filters: "Фильтры",
   sortBy: "Сортировка",
+  done: "Готово",
   searchPlaceholder: "Поиск по имени или ключу",
   searchSubs: "Поиск в подписках",
   searchFav: "Поиск в избранном",
@@ -293,6 +294,10 @@ export const ru: Dict = {
     uptime: "Доступность",
     price: "Цена",
     working_time: "Время работы",
+  },
+  sortDir: {
+    desc: "по убыванию",
+    asc: "по возрастанию",
   },
   status: {
     noData: "Нет данных",

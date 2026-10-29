@@ -1,0 +1,49 @@
+/* The shared sheet title carries no bottom margin of its own. */
+.title {
+  composes: title from "../../app/layers/Sheet.module.css";
+  margin-bottom: 14px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 15px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fixed: the bold active row measures 1px taller. */
+.label {
+  font-size: 15px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--ts-text);
+}
+
+/* Colour, not a fill: a grey wash is the pressed state everywhere else. */
+.labelActive {
+  font-weight: 600;
+  color: var(--ts-accent);
+}
+
+.dir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ts-accent);
+}
+
+.chevron {
+  composes: chevron from "../../styles/list.module.css";
+}
+
+.chevronUp {
+  composes: chevronUp from "../../styles/list.module.css";
+}
+
+.action {
+  margin-top: 14px;
+}

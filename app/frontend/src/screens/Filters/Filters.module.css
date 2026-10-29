@@ -2,37 +2,6 @@
   padding: 14px;
 }
 
-.sortRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 13px 15px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.sortRowActive {
-  background: var(--ts-seg);
-}
-
-.sortLabel {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--ts-text);
-}
-
-.sortLabelActive {
-  font-weight: 600;
-}
-
-.sortChevron {
-  composes: chevron from "../../styles/list.module.css";
-}
-
-.sortChevronUp {
-  composes: chevronUp from "../../styles/list.module.css";
-}
-
 .subLabel {
   margin-bottom: 8px;
   font-size: 13.5px;

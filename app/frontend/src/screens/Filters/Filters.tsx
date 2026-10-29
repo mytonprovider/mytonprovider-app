@@ -1,7 +1,6 @@
 import { tick } from "@/lib/telegram";
 import { BottomBar } from "@/components/BottomBar";
 import { Card } from "@/components/Card";
-import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
 import { RangeSlider } from "@/components/RangeSlider";
 import { Screen } from "@/components/Screen";
@@ -10,7 +9,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { SegmentControl } from "@/components/SegmentControl";
 import { Toggle } from "@/components/Toggle";
 import { selectCatalog } from "@/data/query";
-import type { CatalogFilters, Provider, Range, RangeKey, SortField } from "@/data/types";
+import type { CatalogFilters, Provider, Range, RangeKey } from "@/data/types";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
 import { cx } from "@/lib/cx";
@@ -39,7 +38,6 @@ const SLIDER_META: Record<RangeKey, { labelKey: DictStringKey; dec: number; step
   ping: { labelKey: "pingF", dec: 0, step: 1, unit: "ms" },
 };
 
-const SORT_FIELDS: SortField[] = ["rating", "uptime", "price", "working_time"];
 const PROVIDER_SLIDERS: RangeKey[] = ["rating", "uptime", "price", "bag", "age", "minSpan", "maxSpan"];
 const HARDWARE_SLIDERS: RangeKey[] = ["cores", "ram", "space", "diskRead", "diskWrite", "download", "upload", "ping"];
 
@@ -118,7 +116,6 @@ export function Filters() {
   const sort = useCatalogQuery((s) => s.sort);
   const search = useCatalogQuery((s) => s.search);
   const setFilters = useCatalogQuery((s) => s.setFilters);
-  const setSortField = useCatalogQuery((s) => s.setSortField);
   const resetFilters = useCatalogQuery((s) => s.resetFilters);
 
   useEffect(() => {
@@ -183,32 +180,6 @@ export function Filters() {
         </BottomBar>
       }
     >
-      <SectionHeader title={t.sortBy} />
-      <Card>
-        {SORT_FIELDS.map((field) => {
-          const active = sort.field === field;
-          return (
-            <div
-              key={field}
-              className={cx(styles.sortRow, active && styles.sortRowActive)}
-              onClick={() => {
-                tick();
-                setSortField(field);
-              }}
-            >
-              <span className={cx(styles.sortLabel, active && styles.sortLabelActive)}>
-                {t.sortField[field]}
-              </span>
-              {active && (
-                <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
-                  <Icon glyph="chevronDown" size={16} color="var(--ts-accent)" />
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </Card>
-
       <SectionHeader title={t.providerGroup} />
       <Card className={styles.padCard}>
         {PROVIDER_SLIDERS.map((key) => (

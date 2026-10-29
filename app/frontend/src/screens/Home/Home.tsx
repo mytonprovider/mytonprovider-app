@@ -46,7 +46,6 @@ export function Home() {
   const filters = useCatalogQuery((s) => s.filters);
   const setTab = useCatalogQuery((s) => s.setTab);
   const setSearch = useCatalogQuery((s) => s.setSearch);
-  const setSortField = useCatalogQuery((s) => s.setSortField);
   const resetFilters = useCatalogQuery((s) => s.resetFilters);
 
   const favorites = useFavorites((s) => s.favorites);
@@ -132,7 +131,7 @@ export function Home() {
 
   const toolbar = (withFilters: boolean) => (
     <div className={styles.toolbar}>
-      <button type="button" className={styles.toolbarBtn} onClick={() => setSortField(sort.field)}>
+      <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/sort")}>
         <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
           <Icon glyph="chevronDown" size={13} color="var(--ts-accent)" />
         </span>
