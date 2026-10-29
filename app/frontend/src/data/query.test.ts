@@ -1,7 +1,7 @@
 import { formatBytes, formatMbits, formatPrice, formatSpace } from "@/lib/format";
 import { describe, expect, it } from "vitest";
 import { baseDto, overfilled, providerWith, providers, silent, stable } from "./fixtures";
-import { computeBounds, computeRanks, countActiveFilters, selectCatalog } from "./query";
+import { DEFAULT_FILTERS, computeBounds, computeRanks, countActiveFilters, selectCatalog } from "./query";
 import type { CatalogFilters, Provider, Range, RangeKey } from "./types";
 
 const NO_FILTERS: CatalogFilters = {
@@ -168,5 +168,7 @@ describe("countActiveFilters", () => {
     expect(countActiveFilters(NO_FILTERS)).toBe(0);
     expect(countActiveFilters({ ...NO_FILTERS, ram: [0, 8], location: "RU", stableOnly: true })).toBe(3);
     expect(countActiveFilters({ ...NO_FILTERS, telemetry: false, cpuVirtual: false })).toBe(2);
+    // the pair the catalogue opens with is two filters like any other
+    expect(countActiveFilters(DEFAULT_FILTERS)).toBe(2);
   });
 });

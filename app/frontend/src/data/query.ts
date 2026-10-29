@@ -4,6 +4,34 @@ import { RANGE_KEYS, type CatalogFilters, type FilterBounds, type Provider, type
 
 const FREE_SPACE_BYTES = 100 * BYTES_IN_GIB;
 
+export const EMPTY_FILTERS: CatalogFilters = {
+  location: null,
+  rating: null,
+  uptime: null,
+  price: null,
+  bag: null,
+  cores: null,
+  ram: null,
+  age: null,
+  minSpan: null,
+  maxSpan: null,
+  space: null,
+  diskRead: null,
+  diskWrite: null,
+  download: null,
+  upload: null,
+  ping: null,
+  cpuVirtual: null,
+  storageHash: null,
+  providerHash: null,
+  freeSpace: false,
+  telemetry: null,
+  stableOnly: false,
+};
+
+// What a first run opens with, the pair mytonprovider.org starts from.
+export const DEFAULT_FILTERS: CatalogFilters = { ...EMPTY_FILTERS, freeSpace: true, uptime: [40, 100] };
+
 
 function toUnits(bytes: number | null, factor: number): number | null {
   return bytes === null ? null : bytes / factor;
@@ -126,6 +154,7 @@ export function selectCatalog(providers: Provider[], selection: CatalogSelection
   return sortProviders(filtered, selection.sort);
 }
 
+// The pair the catalogue opens with counts too: the dot is the only sign the list is cut.
 export function countActiveFilters(f: CatalogFilters): number {
   let count = 0;
   if (f.location) count++;

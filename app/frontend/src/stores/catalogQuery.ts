@@ -1,32 +1,9 @@
+import { DEFAULT_FILTERS } from "@/data/query";
 import type { CatalogFilters, Sort, SortField } from "@/data/types";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type Tab = "list" | "subs" | "fav";
-
-const EMPTY_FILTERS: CatalogFilters = {
-  location: null,
-  rating: null,
-  uptime: null,
-  price: null,
-  bag: null,
-  cores: null,
-  ram: null,
-  age: null,
-  minSpan: null,
-  maxSpan: null,
-  space: null,
-  diskRead: null,
-  diskWrite: null,
-  download: null,
-  upload: null,
-  ping: null,
-  cpuVirtual: null,
-  storageHash: null,
-  providerHash: null,
-  freeSpace: false,
-  telemetry: null,
-  stableOnly: false,
-};
 
 const START_TAB_KEY = "mtp-start-tab";
 
@@ -59,20 +36,35 @@ interface CatalogQueryState {
   resetFilters: () => void;
 }
 
-export const useCatalogQuery = create<CatalogQueryState>((set) => ({
-  tab: startTab(),
-  search: "",
-  sort: { field: "rating", dir: "desc" },
-  filters: EMPTY_FILTERS,
-  setTab: (tab) => set({ tab }),
-  setSearch: (search) => set({ search }),
-  setSortField: (field) =>
-    set((state) => ({
-      sort:
-        state.sort.field === field
-          ? { field, dir: state.sort.dir === "asc" ? "desc" : "asc" }
-          : { field, dir: "desc" },
-    })),
-  setFilters: (filters) => set({ filters }),
-  resetFilters: () => set({ filters: EMPTY_FILTERS }),
-}));
+export const useCatalogQuery = create<CatalogQueryState>()(
+  persist(
+    (set) => ({
+      tab: startTab(),
+      search: "",
+      sort: { field: "rating", dir: "desc" },
+      filters: DEFAULT_FILTERS,
+      setTab: (tab) => set({ tab }),
+      setSearch: (search) => set({ search }),
+      setSortField: (field) =>
+        set((state) => ({
+          sort:
+            state.sort.field === field
+              ? { field, dir: state.sort.dir === "asc" ? "desc" : "asc" }
+              : { field, dir: "desc" },
+        })),
+      setFilters: (filters) => set({ filters }),
+      resetFilters: () => set({ filters: DEFAULT_FILTERS }),
+    }),
+    {
+      // Filters only: the tab lives in mtp-start-tab, a search belongs to its session.
+      // The version drops a saved set of the old shape; the merge tops up keys added since.
+      name: "mtp-filters",
+      version: 1,
+      partialize: (state) => ({ filters: state.filters }),
+      merge: (persisted, current) => {
+        const saved = (persisted as { filters?: Partial<CatalogFilters> } | null)?.filters;
+        return { ...current, filters: { ...DEFAULT_FILTERS, ...saved } };
+      },
+    },
+  ),
+);
