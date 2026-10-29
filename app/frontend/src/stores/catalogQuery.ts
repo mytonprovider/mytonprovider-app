@@ -1,4 +1,4 @@
-import { DEFAULT_FILTERS } from "@/data/query";
+import { DEFAULT_FILTERS, EMPTY_FILTERS } from "@/data/query";
 import type { CatalogFilters, Sort, SortField } from "@/data/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -53,7 +53,8 @@ export const useCatalogQuery = create<CatalogQueryState>()(
               : { field, dir: "desc" },
         })),
       setFilters: (filters) => set({ filters }),
-      resetFilters: () => set({ filters: DEFAULT_FILTERS }),
+      // Returning to the opening pair left the list cut with the dot lit, which is not a reset.
+      resetFilters: () => set({ filters: EMPTY_FILTERS }),
     }),
     {
       // Filters only: the tab lives in mtp-start-tab, a search belongs to its session.

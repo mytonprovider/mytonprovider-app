@@ -29,7 +29,7 @@ export const EMPTY_FILTERS: CatalogFilters = {
   stableOnly: false,
 };
 
-// What a first run opens with, the pair mytonprovider.org starts from.
+// What a first run opens with, the pair mytonprovider.org starts from. Reset clears it like any other.
 export const DEFAULT_FILTERS: CatalogFilters = { ...EMPTY_FILTERS, freeSpace: true, uptime: [40, 100] };
 
 function toUnits(bytes: number | null, factor: number): number | null {
