@@ -126,10 +126,6 @@ const FACET: Record<FacetKey, (p: Provider) => [string, string] | null> = {
   providerHash: (p) => (p.telemetry.providerGitHash ? [p.telemetry.providerGitHash, p.telemetry.providerGitHash] : null),
 };
 
-export function isFacetKey(value: string | undefined): value is FacetKey {
-  return value !== undefined && value in FACET;
-}
-
 export function facetOptions(providers: Provider[], key: FacetKey): FacetOption[] {
   const options = new Map<string, FacetOption>();
   for (const provider of providers) {

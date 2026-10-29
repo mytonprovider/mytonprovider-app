@@ -4,37 +4,34 @@ import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
 import { Screen } from "@/components/Screen";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { facetOptions, isFacetKey } from "@/data/query";
+import { facetOptions } from "@/data/query";
+import type { FacetKey } from "@/data/types";
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { tick } from "@/lib/telegram";
 import { useCatalog } from "@/stores/catalog";
 import { useCatalogQuery } from "@/stores/catalogQuery";
 import { useEffect, useMemo } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./Filters.module.css";
 
-export function FacetPicker() {
+export function FacetPicker({ facet }: { facet: FacetKey }) {
   const t = useT();
   const navigate = useNavigate();
-  const { facet } = useParams();
-  const key = isFacetKey(facet) ? facet : null;
 
   const providers = useCatalog((s) => s.providers);
   const load = useCatalog((s) => s.load);
   const filters = useCatalogQuery((s) => s.filters);
   const setFilters = useCatalogQuery((s) => s.setFilters);
-  const options = useMemo(() => (key ? facetOptions(providers, key) : []), [providers, key]);
+  const options = useMemo(() => facetOptions(providers, facet), [providers, facet]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  if (!key) return <Navigate to="/filters" replace />;
-
-  const picked = filters[key];
-  const mono = key !== "location";
-  const pick = (values: string[]) => setFilters({ ...filters, [key]: values });
+  const picked = filters[facet];
+  const mono = facet !== "location";
+  const pick = (values: string[]) => setFilters({ ...filters, [facet]: values });
 
   // List order, not tap order, so the row in the card always names the same country.
   const toggle = (value: string) => {
@@ -45,7 +42,7 @@ export function FacetPicker() {
 
   const header = (
     <ScreenHeader
-      title={t[key]}
+      title={t[facet]}
       onBack={() => navigate(-1)}
       right={
         picked.length > 0 ? (

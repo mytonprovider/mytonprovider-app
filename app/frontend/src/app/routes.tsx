@@ -64,7 +64,9 @@ export function AppRoutes() {
       <Route path="/trusted" element={<Trusted />} />
       <Route path="/menu" element={<MenuSheet />} />
       <Route path="/filters" element={<Filters />} />
-      <Route path="/filters/:facet" element={<FacetPicker />} />
+      <Route path="/filters/location" element={<FacetPicker facet="location" />} />
+      <Route path="/filters/storageHash" element={<FacetPicker facet="storageHash" />} />
+      <Route path="/filters/providerHash" element={<FacetPicker facet="providerHash" />} />
       <Route path="/sort" element={<Sort />} />
       <Route path="/alerts" element={<Alerts />} />
       <Route path="*" element={<Navigate to="/" replace />} />
