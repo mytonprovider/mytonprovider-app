@@ -61,6 +61,8 @@ export const useCatalogQuery = create<CatalogQueryState>()(
       // The version drops a saved set of the old shape; the merge tops up keys added since.
       name: "mtp-filters",
       version: 2,
+      // The old shape kept a single value, not a set; it is dropped rather than converted.
+      migrate: () => ({ filters: DEFAULT_FILTERS }),
       partialize: (state) => ({ filters: state.filters }),
       merge: (persisted, current) => {
         const saved = (persisted as { filters?: Partial<CatalogFilters> } | null)?.filters;
