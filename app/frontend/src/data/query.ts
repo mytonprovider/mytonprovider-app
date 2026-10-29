@@ -146,9 +146,10 @@ export function selectCatalog(providers: Provider[], selection: CatalogSelection
   const search = selection.search.trim().toLowerCase();
   const found = (p: Provider) =>
     p.pubkey.toLowerCase().includes(search) || (selection.names[p.pubkey] ?? "").toLowerCase().includes(search);
+  // Search reaches past the filters: the provider being looked for is often the one they hide.
   const filtered = providers.filter((p) => {
     if (selection.only && !selection.only.includes(p.pubkey)) return false;
-    if (search && !found(p)) return false;
+    if (search) return found(p);
     return matchesFilters(p, selection.filters, selection.bounds);
   });
   return sortProviders(filtered, selection.sort);

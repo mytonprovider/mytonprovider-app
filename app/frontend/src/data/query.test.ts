@@ -121,6 +121,13 @@ describe("selectCatalog", () => {
     expect(select(providers, { search: "moscow", names: { [silent.pubkey]: "Moscow node" } })).toEqual([silent]);
   });
 
+  // The defaults hide a provider with no room left, and that is the one an owner searches for.
+  it("lets a search reach past the filters, but not past the tab", () => {
+    expect(pick(providers, { freeSpace: true })).toEqual([stable]);
+    expect(pick(providers, { freeSpace: true }, silent.pubkey.slice(-6))).toEqual([silent]);
+    expect(select(providers, { only: [stable.pubkey], search: silent.pubkey.slice(-6) })).toEqual([]);
+  });
+
   it("restricts the tab to its own keys", () => {
     expect(select(providers, { only: [silent.pubkey] })).toEqual([silent]);
   });
