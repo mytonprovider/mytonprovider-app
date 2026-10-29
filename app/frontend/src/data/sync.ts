@@ -16,7 +16,7 @@ import { useTrusted } from "@/stores/trusted";
 let chain: Promise<unknown> = Promise.resolve();
 
 function queue(label: string, action: () => Promise<unknown>): void {
-  if (!useAuth.getState().hasSession) return;
+  if (useAuth.getState().session !== "open") return;
   chain = chain.then(action).catch((error: unknown) => console.error(`${label} failed`, error));
 }
 

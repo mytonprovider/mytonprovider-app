@@ -38,7 +38,7 @@ function registerRevalidation(): void {
   onRevalidate(() => {
     void useCatalog.getState().load();
     const auth = useAuth.getState();
-    if (auth.hasSession) {
+    if (auth.session === "open") {
       invalidateOwner();
       hydrateFromServer().catch((error: unknown) => console.error("sync failed", error));
     } else if (isInTelegram() || auth.loggedIn) {

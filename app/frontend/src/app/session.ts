@@ -27,6 +27,8 @@ export async function establishSession(): Promise<void> {
     await hydrateFromServer(true);
     if (!isInTelegram()) auth.openSession();
   } catch (error) {
+    // The attempt is over either way: left unknown, the owner panel would wait for it forever.
+    auth.closeSession();
     if (error instanceof BackendError && error.detail === "Banned") auth.setBanned(true);
     if (error instanceof BackendError && error.status === 401) {
       sessionLost();

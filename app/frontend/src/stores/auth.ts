@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+// Three states, not a flag: before the attempt finishes "no session" would read as a refusal.
+export type SessionState = "unknown" | "open" | "closed";
+
 export interface AuthUser {
   name: string;
   username: string | null;
@@ -11,7 +14,7 @@ export interface AuthUser {
 interface AuthState {
   loggedIn: boolean;
   user: AuthUser | null;
-  hasSession: boolean;
+  session: SessionState;
   banned: boolean;
   isAdmin: boolean;
   login: (user: AuthUser) => void;
@@ -39,16 +42,16 @@ export const useAuth = create<AuthState>()(
     (set) => ({
       loggedIn: false,
       user: null,
-      hasSession: false,
+      session: "unknown",
       banned: false,
       isAdmin: false,
       login: (user) => set({ loggedIn: true, user }),
-      openSession: () => set({ hasSession: true }),
-      closeSession: () => set({ hasSession: false }),
+      openSession: () => set({ session: "open" }),
+      closeSession: () => set({ session: "closed" }),
       setBanned: (banned) => set({ banned }),
       setAdmin: (isAdmin) => set({ isAdmin }),
       logout: () =>
-        set({ loggedIn: false, user: null, hasSession: false, banned: false, isAdmin: false }),
+        set({ loggedIn: false, user: null, session: "closed", banned: false, isAdmin: false }),
     }),
     {
       name: "mtp-auth",

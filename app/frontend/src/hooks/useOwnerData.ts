@@ -65,7 +65,7 @@ const PREFETCH_PERIODS: OwnerPeriod[] = ["hour", "week", "month"];
 const DEFAULT_CHART_RANGE: OwnerChartRange = "1h";
 
 export function prefetchOwner(pubkey: string): void {
-  if (!useAuth.getState().hasSession) return;
+  if (useAuth.getState().session !== "open") return;
   fetchProvider(pubkey).catch(() => {});
   fetchChart(pubkey, DEFAULT_CHART_RANGE).catch(() => {});
   for (const period of PREFETCH_PERIODS) {
@@ -92,7 +92,7 @@ export function useOwnerData(
   period: OwnerPeriod,
   chartRange: OwnerChartRange = DEFAULT_CHART_RANGE,
 ): { payload: OwnerPayload | null; denied: boolean; failed: boolean; refreshing: boolean } {
-  const hasSession = useAuth((s) => s.hasSession);
+  const open = useAuth((s) => s.session === "open");
   const tick = useOwnerRevalidation((s) => s.tick);
   const [payload, setPayload] = useState<OwnerPayload | null>(null);
   const [denied, setDenied] = useState(false);
@@ -101,7 +101,7 @@ export function useOwnerData(
   const params = useRef("");
 
   useEffect(() => {
-    if (!enabled || !hasSession) {
+    if (!enabled || !open) {
       setPayload(null);
       setDenied(false);
       setFailed(false);
@@ -136,7 +136,7 @@ export function useOwnerData(
     return () => {
       alive = false;
     };
-  }, [pubkey, enabled, hasSession, period, chartRange, tick]);
+  }, [pubkey, enabled, open, period, chartRange, tick]);
 
   return { payload, denied, failed, refreshing };
 }

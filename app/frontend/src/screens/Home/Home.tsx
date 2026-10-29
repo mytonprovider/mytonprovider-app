@@ -94,7 +94,7 @@ export function Home() {
     void reload().then((ok) => {
       if (!ok) notify("error");
     });
-    if (useAuth.getState().hasSession) {
+    if (useAuth.getState().session === "open") {
       hydrateFromServer().catch((error: unknown) => console.error("retry sync failed", error));
     }
   };
