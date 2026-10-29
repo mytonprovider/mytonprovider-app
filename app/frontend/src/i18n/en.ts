@@ -21,6 +21,7 @@ export const en = {
   searchFav: "Search favorites",
   searchEmpty: "Nothing on this tab matches",
   providersNotFound: "No providers match these filters",
+  goneFromCatalog: "These providers are no longer in the catalogue",
   loadError: "Couldn't load providers",
   ownerFailed: "Couldn't load the data",
   sessionFailed: "Couldn't sign in. Relaunch the app",

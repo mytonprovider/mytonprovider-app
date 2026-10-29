@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon/Icon";
 import { RoundToggle } from "@/components/RoundToggle";
 import { TabPager } from "@/components/TabPager";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
-import { countActiveFilters, selectCatalog } from "@/data/query";
+import { EMPTY_FILTERS, countActiveFilters, selectCatalog } from "@/data/query";
 import { hydrateFromServer, toggleFavorite } from "@/data/sync";
 import type { Provider } from "@/data/types";
 import type { ReactNode } from "react";
@@ -71,13 +71,14 @@ export function Home() {
     () => selectCatalog(providers, { only: null, search, filters, sort, names, bounds }),
     [providers, search, filters, sort, names, bounds],
   );
+  // Hand-picked tabs ignore the catalogue filters: they would hide the provider somebody came for.
   const favItems = useMemo(
-    () => selectCatalog(providers, { only: favorites, search, filters, sort, names, bounds }),
-    [providers, favorites, search, filters, sort, names, bounds],
+    () => selectCatalog(providers, { only: favorites, search, filters: EMPTY_FILTERS, sort, names, bounds }),
+    [providers, favorites, search, sort, names, bounds],
   );
   const subItems = useMemo(
-    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters, sort, names, bounds }) : []),
-    [loggedIn, providers, subscribed, search, filters, sort, names, bounds],
+    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters: EMPTY_FILTERS, sort, names, bounds }) : []),
+    [loggedIn, providers, subscribed, search, sort, names, bounds],
   );
 
   const activeFilters = countActiveFilters(filters);
@@ -129,7 +130,7 @@ export function Home() {
 
   const favHero = <Callout hero glyph="star" title={t.favTitle} desc={t.favDesc} />;
 
-  const sortToolbar = (
+  const toolbar = (withFilters: boolean) => (
     <div className={styles.toolbar}>
       <button type="button" className={styles.toolbarBtn} onClick={() => setSortField(sort.field)}>
         <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
@@ -137,19 +138,21 @@ export function Home() {
         </span>
         {t.sortField[sort.field]}
       </button>
-      <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/filters")}>
-        <Icon glyph="sliders" size={16} />
-        {t.filters}
-        {activeFilters > 0 && <span className={styles.filterDot} />}
-      </button>
+      {withFilters && (
+        <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/filters")}>
+          <Icon glyph="sliders" size={16} />
+          {t.filters}
+          {activeFilters > 0 && <span className={styles.filterDot} />}
+        </button>
+      )}
     </div>
   );
 
-  const listToolbar = (listItems.length > 0 || loading) && sortToolbar;
+  const listToolbar = (listItems.length > 0 || loading) && toolbar(true);
 
-  const favToolbar = (favItems.length > 0 || favLoading) && sortToolbar;
+  const favToolbar = (favItems.length > 0 || favLoading) && toolbar(false);
 
-  const subsToolbar = (subItems.length > 0 || subsLoading) && sortToolbar;
+  const subsToolbar = (subItems.length > 0 || subsLoading) && toolbar(false);
 
   const query = search.trim();
 
@@ -198,7 +201,7 @@ export function Home() {
             ) : subscribed.length === 0 ? (
               state("subs", t.subsEmpty, actionButton(t.findProviders, () => setTab("list")))
             ) : (
-              state("subs", t.providersNotFound, activeFilters > 0 ? actionButton(t.reset, resetFilters) : undefined)
+              state("subs", t.goneFromCatalog)
             )
           }
           onOpen={openProvider}
@@ -223,6 +226,8 @@ export function Home() {
             searchState(key)
           ) : key === "fav" && favorites.length === 0 ? (
             state("fav", t.favEmpty, actionButton(t.findProviders, () => setTab("list")))
+          ) : key === "fav" ? (
+            state("fav", t.goneFromCatalog)
           ) : (
             state(key, t.providersNotFound, activeFilters > 0 ? actionButton(t.reset, resetFilters) : undefined)
           )
