@@ -2,6 +2,7 @@ import { MenuSheet } from "@/components/MenuSheet";
 import { bindSettingsButton, getStartParam } from "@/lib/telegram";
 import { Alerts } from "@/screens/Alerts/Alerts";
 import { BagExplorer } from "@/screens/BagExplorer/BagExplorer";
+import { FacetPicker } from "@/screens/Filters/FacetPicker";
 import { Filters } from "@/screens/Filters/Filters";
 import { Home } from "@/screens/Home/Home";
 import { ProviderBags } from "@/screens/ProviderBags/ProviderBags";
@@ -63,6 +64,7 @@ export function AppRoutes() {
       <Route path="/trusted" element={<Trusted />} />
       <Route path="/menu" element={<MenuSheet />} />
       <Route path="/filters" element={<Filters />} />
+      <Route path="/filters/:facet" element={<FacetPicker />} />
       <Route path="/sort" element={<Sort />} />
       <Route path="/alerts" element={<Alerts />} />
       <Route path="*" element={<Navigate to="/" replace />} />

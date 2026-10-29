@@ -59,7 +59,7 @@ export const useCatalogQuery = create<CatalogQueryState>()(
       // Filters only: the tab lives in mtp-start-tab, a search belongs to its session.
       // The version drops a saved set of the old shape; the merge tops up keys added since.
       name: "mtp-filters",
-      version: 1,
+      version: 2,
       partialize: (state) => ({ filters: state.filters }),
       merge: (persisted, current) => {
         const saved = (persisted as { filters?: Partial<CatalogFilters> } | null)?.filters;

@@ -1,6 +1,6 @@
-import { tick } from "@/lib/telegram";
 import { BottomBar } from "@/components/BottomBar";
 import { Card } from "@/components/Card";
+import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
 import { RangeSlider } from "@/components/RangeSlider";
 import { Screen } from "@/components/Screen";
@@ -8,8 +8,8 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SegmentControl } from "@/components/SegmentControl";
 import { Toggle } from "@/components/Toggle";
-import { selectCatalog } from "@/data/query";
-import type { CatalogFilters, Provider, Range, RangeKey } from "@/data/types";
+import { facetOptions, selectCatalog } from "@/data/query";
+import type { CatalogFilters, FacetKey, Range, RangeKey } from "@/data/types";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
 import { cx } from "@/lib/cx";
@@ -67,38 +67,22 @@ function FilterSlider({
   );
 }
 
-function ChipRow({
-  options,
-  value,
-  anyLabel,
-  mono,
-  onChange,
-}: {
-  options: string[];
-  value: string | null;
-  anyLabel: string;
-  mono?: boolean;
-  onChange: (value: string | null) => void;
-}) {
+function FacetRow({ facet, value, anyLabel, mono }: { facet: FacetKey; value: string[]; anyLabel: string; mono?: boolean }) {
+  const t = useT();
+  const navigate = useNavigate();
+  const providers = useCatalog((s) => s.providers);
+  const options = useMemo(() => facetOptions(providers, facet), [providers, facet]);
+  const label = value.length === 0 ? anyLabel : (options.find((option) => value.includes(option.value))?.label ?? value[0]);
+
   return (
-    <div className={styles.chips}>
-      {[null, ...options].map((option) => {
-        const active = value === option;
-        return (
-          <button
-            key={option ?? "any"}
-            type="button"
-            className={cx(styles.chip, mono && option !== null && styles.chipMono, active && styles.chipActive)}
-            onClick={() => {
-              tick();
-              onChange(option);
-            }}
-          >
-            {option ?? anyLabel}
-          </button>
-        );
-      })}
-    </div>
+    <button type="button" className={styles.facetRow} onClick={() => navigate(`/filters/${facet}`)}>
+      <span className={styles.sliderLabel}>{t[facet]}</span>
+      <span className={styles.facetValue}>
+        <span className={cx(mono && value.length > 0 && styles.facetMono)}>{label}</span>
+        {value.length > 1 && <span className={styles.facetMore}>+{value.length - 1}</span>}
+        <Icon glyph="chevron" size={16} color="var(--ts-hint)" />
+      </span>
+    </button>
   );
 }
 
@@ -121,29 +105,6 @@ export function Filters() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const locations = useMemo(() => {
-    const set = new Set<string>();
-    for (const provider of providers) {
-      if (provider.location?.countryIso) set.add(provider.location.countryIso);
-    }
-    return [...set];
-  }, [providers]);
-
-  const hashes = useMemo(() => {
-    const collect = (pick: (p: Provider) => string | null) => {
-      const counts = new Map<string, number>();
-      for (const provider of providers) {
-        const hash = pick(provider);
-        if (hash) counts.set(hash, (counts.get(hash) ?? 0) + 1);
-      }
-      return [...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0));
-    };
-    return {
-      storage: collect((p) => p.telemetry.storageGitHash),
-      provider: collect((p) => p.telemetry.providerGitHash),
-    };
-  }, [providers]);
 
   const resultCount = useMemo(
     () => selectCatalog(providers, { only: null, search, filters, sort, names, bounds }).length,
@@ -191,13 +152,7 @@ export function Filters() {
             onChange={setRange(key)}
           />
         ))}
-        <div className={styles.subLabel}>{t.location}</div>
-        <ChipRow
-          options={locations}
-          value={filters.location}
-          anyLabel={t.anyLoc}
-          onChange={(value) => patch({ location: value })}
-        />
+        <FacetRow facet="location" value={filters.location} anyLabel={t.anyLoc} />
       </Card>
 
       <SectionHeader title={t.hardware} />
@@ -229,22 +184,8 @@ export function Filters() {
 
       <SectionHeader title={t.software} />
       <Card className={styles.padCard}>
-        <div className={styles.subLabel}>{t.storageHash}</div>
-        <ChipRow
-          options={hashes.storage}
-          value={filters.storageHash}
-          anyLabel={t.any}
-          mono
-          onChange={(value) => patch({ storageHash: value })}
-        />
-        <div className={styles.subLabel}>{t.providerHash}</div>
-        <ChipRow
-          options={hashes.provider}
-          value={filters.providerHash}
-          anyLabel={t.any}
-          mono
-          onChange={(value) => patch({ providerHash: value })}
-        />
+        <FacetRow facet="storageHash" value={filters.storageHash} anyLabel={t.any} mono />
+        <FacetRow facet="providerHash" value={filters.providerHash} anyLabel={t.any} mono />
       </Card>
 
       <SectionHeader title={t.statusGroup} />

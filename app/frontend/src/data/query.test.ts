@@ -1,7 +1,7 @@
 import { formatBytes, formatMbits, formatPrice, formatSpace } from "@/lib/format";
 import { describe, expect, it } from "vitest";
 import { baseDto, overfilled, providerWith, providers, silent, stable } from "./fixtures";
-import { DEFAULT_FILTERS, computeBounds, computeRanks, countActiveFilters, selectCatalog } from "./query";
+import { DEFAULT_FILTERS, computeBounds, computeRanks, countActiveFilters, facetOptions, selectCatalog } from "./query";
 import type { CatalogFilters, Provider, Range, RangeKey } from "./types";
 
 const NO_FILTERS: CatalogFilters = {
@@ -20,10 +20,10 @@ const NO_FILTERS: CatalogFilters = {
   download: null,
   upload: null,
   ping: null,
-  location: null,
+  location: [],
   cpuVirtual: null,
-  storageHash: null,
-  providerHash: null,
+  storageHash: [],
+  providerHash: [],
   freeSpace: false,
   telemetry: null,
   stableOnly: false,
@@ -112,8 +112,8 @@ describe("selectCatalog", () => {
     expect(pick(providers, { telemetry: false })).toEqual([silent]);
     expect(pick(providers, { stableOnly: true })).not.toContain(silent);
     expect(pick(providers, { freeSpace: true })).toEqual([stable]);
-    expect(pick(providers, { location: "RU" }).length).toBe(3);
-    expect(pick(providers, { location: "JP" }).length).toBe(0);
+    expect(pick(providers, { location: ["RU"] }).length).toBe(3);
+    expect(pick(providers, { location: ["JP"] }).length).toBe(0);
   });
 
   it("searches the key and the name the owner gave", () => {
@@ -170,10 +170,36 @@ describe("computeRanks", () => {
   });
 });
 
+describe("facetOptions", () => {
+  it("counts by value, shows a country by name and skips what is not reported", () => {
+    const germany = providerWith({ location: { country: "Germany", country_iso: "DE", city: "Berlin", time_zone: "Europe/Berlin" } }, "cccccc");
+
+    expect(facetOptions([...providers, germany], "location")).toEqual([
+      { value: "RU", label: "Russia", count: 3 },
+      { value: "DE", label: "Germany", count: 1 },
+    ]);
+    // the silent one sends no telemetry, so it has no hash to be counted under
+    expect(facetOptions(providers, "storageHash")).toEqual([{ value: "ba05e00", label: "ba05e00", count: 2 }]);
+  });
+
+  it("lets a set of values through and nothing else", () => {
+    const germany = providerWith({ location: { country: "Germany", country_iso: "DE", city: "Berlin", time_zone: "Europe/Berlin" } }, "cccccc");
+    const list = [...providers, germany];
+
+    expect(pick(list, { location: ["RU", "DE"] }).length).toBe(4);
+    expect(pick(list, { location: ["DE"] })).toEqual([germany]);
+    expect(pick(list, { location: [] }).length).toBe(4);
+    // the silent one reports no hash, so a set of hashes must not take it along
+    expect(pick(list, { storageHash: ["ba05e00"] })).not.toContain(silent);
+  });
+});
+
 describe("countActiveFilters", () => {
   it("counts every dimension once", () => {
     expect(countActiveFilters(NO_FILTERS)).toBe(0);
-    expect(countActiveFilters({ ...NO_FILTERS, ram: [0, 8], location: "RU", stableOnly: true })).toBe(3);
+    expect(countActiveFilters({ ...NO_FILTERS, ram: [0, 8], location: ["RU"], stableOnly: true })).toBe(3);
+    // a set of countries is one dimension, however many are in it
+    expect(countActiveFilters({ ...NO_FILTERS, location: ["RU", "DE", "FI"] })).toBe(1);
     expect(countActiveFilters({ ...NO_FILTERS, telemetry: false, cpuVirtual: false })).toBe(2);
     // the pair the catalogue opens with is two filters like any other
     expect(countActiveFilters(DEFAULT_FILTERS)).toBe(2);
