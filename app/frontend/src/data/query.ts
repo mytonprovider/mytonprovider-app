@@ -146,6 +146,8 @@ const SORT_VALUE: Record<Sort["field"], (p: Provider) => number> = {
   working_time: (p) => p.workingTime,
 };
 
+export const SORT_FIELDS = Object.keys(SORT_VALUE) as Sort["field"][];
+
 function sortProviders(list: Provider[], sort: Sort): Provider[] {
   const value = SORT_VALUE[sort.field];
   return [...list].sort((a, b) => (sort.dir === "asc" ? value(a) - value(b) : value(b) - value(a)));

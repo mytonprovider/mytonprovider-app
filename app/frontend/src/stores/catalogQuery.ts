@@ -1,4 +1,4 @@
-import { DEFAULT_FILTERS, EMPTY_FILTERS } from "@/data/query";
+import { DEFAULT_FILTERS, EMPTY_FILTERS, SORT_FIELDS } from "@/data/query";
 import type { CatalogFilters, Sort, SortField } from "@/data/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -57,16 +57,19 @@ export const useCatalogQuery = create<CatalogQueryState>()(
       resetFilters: () => set({ filters: EMPTY_FILTERS }),
     }),
     {
-      // Filters only: the tab lives in mtp-start-tab, a search belongs to its session.
-      // The version drops a saved set of the old shape; the merge tops up keys added since.
       name: "mtp-filters",
       version: 2,
       // The old shape kept a single value, not a set; it is dropped rather than converted.
       migrate: () => ({ filters: DEFAULT_FILTERS }),
-      partialize: (state) => ({ filters: state.filters }),
+      partialize: (state) => ({ filters: state.filters, sort: state.sort }),
+      // Only what was saved comes back: a key it never had stays unset, an unknown sort is dropped.
       merge: (persisted, current) => {
-        const saved = (persisted as { filters?: Partial<CatalogFilters> } | null)?.filters;
-        return { ...current, filters: { ...DEFAULT_FILTERS, ...saved } };
+        const state = { ...current, ...(persisted as Partial<CatalogQueryState>) };
+        return {
+          ...state,
+          filters: { ...EMPTY_FILTERS, ...state.filters },
+          sort: SORT_FIELDS.includes(state.sort?.field) ? state.sort : current.sort,
+        };
       },
     },
   ),

@@ -2,14 +2,12 @@ import { tick } from "@/lib/telegram";
 import { Card } from "@/components/Card";
 import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
-import type { SortField } from "@/data/types";
+import { SORT_FIELDS } from "@/data/query";
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { useCatalogQuery } from "@/stores/catalogQuery";
 import { useNavigate } from "react-router-dom";
 import styles from "./Sort.module.css";
-
-const SORT_FIELDS: SortField[] = ["rating", "uptime", "price", "working_time"];
 
 export function Sort() {
   const t = useT();
