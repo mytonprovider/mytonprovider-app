@@ -4,6 +4,7 @@ import { ALERT_TYPES, defaultThreshold, type AlertTypeMap, type ThresholdMap } f
 import { normalizeLang } from "@/i18n";
 import type { AlertKey, Lang } from "@/i18n/types";
 import { toUserFriendly } from "@/lib/address";
+import { readLocal, writeLocal } from "@/lib/storage";
 import { useAlerts } from "@/stores/alerts";
 import { makeAuthUser, useAuth } from "@/stores/auth";
 import { useSettings } from "@/stores/settings";
@@ -75,7 +76,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
   if (first) {
     useAuth.getState().login(makeAuthUser(first, rest.join(" "), profile.username, profile.photo_url));
   }
-  if (!localStorage.getItem(MIGRATED_KEY)) {
+  if (!readLocal(MIGRATED_KEY)) {
     const favorites = useFavorites.getState().favorites;
     const trusted = useTrusted.getState().addresses;
     const names = namesPayload();
@@ -87,7 +88,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
         addresses: { ...profile.names.addresses, ...names.addresses },
       });
     }
-    localStorage.setItem(MIGRATED_KEY, "1");
+    writeLocal(MIGRATED_KEY, "1");
   }
   profileAt = Date.now();
   useFavorites.getState().setAll(profile.favorites);

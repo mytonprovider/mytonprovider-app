@@ -1,4 +1,5 @@
 import { DEFAULT_FILTERS, EMPTY_FILTERS, SORT_FIELDS } from "@/data/query";
+import { readLocal, writeLocal } from "@/lib/storage";
 import type { CatalogFilters, Sort, SortField } from "@/data/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -8,20 +9,12 @@ export type Tab = "list" | "subs" | "fav";
 const START_TAB_KEY = "mtp-start-tab";
 
 function startTab(): Tab {
-  try {
-    const saved = localStorage.getItem(START_TAB_KEY);
-    return saved === "subs" || saved === "fav" ? saved : "list";
-  } catch {
-    return "list";
-  }
+  const saved = readLocal(START_TAB_KEY);
+  return saved === "subs" || saved === "fav" ? saved : "list";
 }
 
 export function rememberStartTab(tab: Tab): void {
-  try {
-    localStorage.setItem(START_TAB_KEY, tab);
-  } catch {
-    return;
-  }
+  writeLocal(START_TAB_KEY, tab);
 }
 
 interface CatalogQueryState {
