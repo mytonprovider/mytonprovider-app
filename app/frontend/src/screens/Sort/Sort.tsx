@@ -24,8 +24,9 @@ export function Sort() {
         {SORT_FIELDS.map((field) => {
           const active = sort.field === field;
           return (
-            <div
+            <button
               key={field}
+              type="button"
               className={styles.row}
               onClick={() => {
                 tick();
@@ -41,7 +42,7 @@ export function Sort() {
                   </span>
                 </span>
               )}
-            </div>
+            </button>
           );
         })}
       </Card>
