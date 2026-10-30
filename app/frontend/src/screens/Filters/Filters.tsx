@@ -8,7 +8,7 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SegmentControl } from "@/components/SegmentControl";
 import { Toggle } from "@/components/Toggle";
-import { countActiveFilters, facetOptions, selectCatalog } from "@/data/query";
+import { facetOptions, selectCatalog } from "@/data/query";
 import type { CatalogFilters, FacetKey, Range, RangeKey } from "@/data/types";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
@@ -119,7 +119,7 @@ export function Filters() {
 
   // A search reaches past the filters, so leaving it on would show the list the count does not mean.
   const done = () => {
-    if (search && countActiveFilters(filters) > 0) setSearch("");
+    if (search) setSearch("");
     navigate(-1);
   };
 

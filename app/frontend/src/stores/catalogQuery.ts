@@ -61,7 +61,10 @@ export const useCatalogQuery = create<CatalogQueryState>()(
         return {
           ...state,
           filters: { ...EMPTY_FILTERS, ...state.filters },
-          sort: SORT_FIELDS.includes(state.sort?.field) ? state.sort : current.sort,
+          sort:
+            SORT_FIELDS.includes(state.sort?.field) && ["asc", "desc"].includes(state.sort.dir)
+              ? state.sort
+              : current.sort,
         };
       },
     },
