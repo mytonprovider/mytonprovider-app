@@ -35,22 +35,27 @@ def custom_emoji(emoji_id: str, fallback: str) -> str:
     return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
 
 
+# Addresses and bag ids come from the upstream catalogue, so a url is escaped like any other value.
+def link(url: str, label: str) -> str:
+    return f'<a href="{html.escape(url)}">{label}</a>'
+
+
 def provider_url(pubkey: str) -> str:
     return f"https://t.me/{config.BOT_USERNAME}?startapp={pubkey}"
 
 
 def address_link(explorer: str, address: str) -> str:
-    return f'<a href="{address_url(explorer, address)}">{short_address(address)}</a>'
+    return link(address_url(explorer, address), short_address(address))
 
 
 def owner_link(explorer: str, address: str, name: str | None) -> str:
     label = html.escape(name) if name else short_address(address)
-    return f'<a href="{address_url(explorer, address)}">{label}</a>'
+    return link(address_url(explorer, address), label)
 
 
 def provider_link(pubkey: str, name: str | None) -> str:
     label = html.escape(name) if name else short_key(pubkey)
-    return f'<b><a href="{provider_url(pubkey)}">{label}</a></b>'
+    return f"<b>{link(provider_url(pubkey), label)}</b>"
 
 
 # The message is about one contract, and one bag id can belong to several of them, so the
@@ -60,7 +65,7 @@ def bag_url(address: str) -> str:
 
 
 def bag_link(item: Bag) -> str:
-    return f'<a href="{bag_url(item.address)}">{short_key(item.bag_id)}</a>'
+    return link(bag_url(item.address), short_key(item.bag_id))
 
 
 def alert(lang: str, title: str, pubkey: str, color: AlertColor, name: str | None) -> str:
@@ -72,7 +77,7 @@ def _bag_body(lang: str, explorer: str, item: Bag, trusted: bool, owner_name: st
     lines = [f"<b>{t(lang, 'bag_id')}</b> {bag_link(item)}"]
     if item.size:
         gateway = BAG_GATEWAY.format(bag_id=item.bag_id.lower())
-        lines.append(f'<b>{t(lang, "bag_content")}</b> <a href="{gateway}">{format_size(item.size)}</a>')
+        lines.append(f"<b>{t(lang, 'bag_content')}</b> {link(gateway, format_size(item.size))}")
     lines.append(f"<b>{t(lang, 'bag_contract')}</b> {address_link(explorer, item.address)}")
     if item.owner:
         mark = " " + custom_emoji(TRUSTED_MARK, "\u2714\ufe0f") if trusted else ""
