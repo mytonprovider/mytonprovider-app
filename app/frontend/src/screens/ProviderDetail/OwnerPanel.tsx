@@ -21,7 +21,7 @@ import { useAlerts } from "@/stores/alerts";
 import { useAuth } from "@/stores/auth";
 import { useSettings } from "@/stores/settings";
 import { type ReactNode, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { FieldCard } from "./FieldCard";
 import styles from "./ProviderDetail.module.css";
 

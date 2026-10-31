@@ -10,7 +10,7 @@ import type { Lang } from "@/i18n/types";
 import { isInTelegram, openExternal } from "@/lib/telegram";
 import { useAuth } from "@/stores/auth";
 import { type Explorer, type Theme, useSettings } from "@/stores/settings";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./MenuSheet.module.css";
 
 interface MenuRowProps {

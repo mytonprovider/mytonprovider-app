@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { HashRouter } from "react-router-dom";
+import { HashRouter } from "react-router";
 import { endSession } from "@/app/session";
 import { Callout } from "@/components/Callout";
 import { useT } from "@/i18n";
@@ -31,7 +31,7 @@ export function Root() {
               </button>
             </Callout>
           ) : (
-            <HashRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+            <HashRouter>
               <AppRoutes />
             </HashRouter>
           )}

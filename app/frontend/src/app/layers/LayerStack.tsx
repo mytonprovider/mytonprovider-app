@@ -1,6 +1,6 @@
 import { bindBackButton } from "@/lib/telegram";
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { type Location, Routes, useLocation, useNavigate } from "react-router-dom";
+import { type Location, Routes, useLocation, useNavigate } from "react-router";
 import { type DialogSlot, LayerContext, setDialogsOpen } from "./context";
 import styles from "./LayerStack.module.css";
 import { isBaseRoute, sheetHeight } from "./presentation";

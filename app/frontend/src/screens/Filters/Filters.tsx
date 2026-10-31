@@ -17,7 +17,7 @@ import { useCatalog } from "@/stores/catalog";
 import { useCatalogQuery } from "@/stores/catalogQuery";
 import { useNames } from "@/stores/names";
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Filters.module.css";
 
 const SLIDER_META: Record<RangeKey, { labelKey: DictStringKey; dec: number; step: number; unit: string; unitKey?: DictStringKey }> = {

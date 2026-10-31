@@ -16,7 +16,7 @@ import { useNames } from "@/stores/names";
 import { useChannels } from "@/stores/channels";
 import { useTrusted } from "@/stores/trusted";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Trusted.module.css";
 
 type Invalid = "none" | "format" | "duplicate";

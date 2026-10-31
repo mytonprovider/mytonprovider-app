@@ -6,7 +6,7 @@ import { SORT_FIELDS } from "@/data/query";
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { useCatalogQuery } from "@/stores/catalogQuery";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Sort.module.css";
 
 export function Sort() {

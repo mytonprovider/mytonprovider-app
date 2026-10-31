@@ -11,7 +11,7 @@ import { saveAlerts, setAlertThreshold, setAlertsEnabled, toggleAlertType } from
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { useAlerts } from "@/stores/alerts";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Alerts.module.css";
 
 export function Alerts() {

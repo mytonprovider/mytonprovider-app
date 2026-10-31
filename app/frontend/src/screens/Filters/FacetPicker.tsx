@@ -12,7 +12,7 @@ import { tick } from "@/lib/telegram";
 import { useCatalog } from "@/stores/catalog";
 import { useCatalogQuery } from "@/stores/catalogQuery";
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Filters.module.css";
 
 export function FacetPicker({ facet }: { facet: FacetKey }) {
