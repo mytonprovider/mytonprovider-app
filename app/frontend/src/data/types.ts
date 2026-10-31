@@ -85,13 +85,21 @@ export const RANGE_KEYS = [
 export type RangeKey = (typeof RANGE_KEYS)[number];
 
 export type CatalogFilters = Record<RangeKey, Range | null> & {
-  location: string | null;
+  location: string[];
   cpuVirtual: boolean | null;
-  storageHash: string | null;
-  providerHash: string | null;
+  storageHash: string[];
+  providerHash: string[];
   freeSpace: boolean;
   telemetry: boolean | null;
   stableOnly: boolean;
 };
 
 export type FilterBounds = Record<RangeKey, Range>;
+
+export type FacetKey = "location" | "storageHash" | "providerHash";
+
+export interface FacetOption {
+  value: string;
+  label: string;
+  count: number;
+}

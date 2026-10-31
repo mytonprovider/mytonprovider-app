@@ -15,6 +15,8 @@ interface ProviderBagsState {
   load: (pubkey: string, state: BagFilter) => Promise<void>;
 }
 
+const inflight = new Set<string>();
+
 export function bucketKey(pubkey: string, state: BagFilter): string {
   return `${pubkey}|${state}`;
 }
@@ -25,7 +27,14 @@ export const useProviderBags = create<ProviderBagsState>((set, get) => ({
     const key = bucketKey(pubkey, state);
     const cached = get().buckets[key];
     if (cached && Date.now() - cached.fetchedAt < STALE_MS) return;
-    const { items, total } = await backend.providerBags(pubkey, state);
-    set((s) => ({ buckets: { ...s.buckets, [key]: { items, total, fetchedAt: Date.now() } } }));
+    // A bucket runs to half a megabyte, so a second request for the same one is worth skipping.
+    if (inflight.has(key)) return;
+    inflight.add(key);
+    try {
+      const { items, total } = await backend.providerBags(pubkey, state);
+      set((s) => ({ buckets: { ...s.buckets, [key]: { items, total, fetchedAt: Date.now() } } }));
+    } finally {
+      inflight.delete(key);
+    }
   },
 }));

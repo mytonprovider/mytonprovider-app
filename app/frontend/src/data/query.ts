@@ -1,9 +1,36 @@
 import { BITS_IN_MBIT, BYTES_IN_GIB, NANO, PING_MAX, diskSpeedToNum } from "@/lib/format";
 import { statusTone } from "@/lib/status";
-import { RANGE_KEYS, type CatalogFilters, type FilterBounds, type Provider, type Range, type RangeKey, type Sort } from "./types";
+import { RANGE_KEYS, type CatalogFilters, type FacetKey, type FacetOption, type FilterBounds, type Provider, type Range, type RangeKey, type Sort } from "./types";
 
 const FREE_SPACE_BYTES = 100 * BYTES_IN_GIB;
 
+export const EMPTY_FILTERS: CatalogFilters = {
+  location: [],
+  rating: null,
+  uptime: null,
+  price: null,
+  bag: null,
+  cores: null,
+  ram: null,
+  age: null,
+  minSpan: null,
+  maxSpan: null,
+  space: null,
+  diskRead: null,
+  diskWrite: null,
+  download: null,
+  upload: null,
+  ping: null,
+  cpuVirtual: null,
+  storageHash: [],
+  providerHash: [],
+  freeSpace: false,
+  telemetry: null,
+  stableOnly: false,
+};
+
+// What a first run opens with, the pair mytonprovider.org starts from. Reset clears it like any other.
+export const DEFAULT_FILTERS: CatalogFilters = { ...EMPTY_FILTERS, freeSpace: true, uptime: [40, 100] };
 
 function toUnits(bytes: number | null, factor: number): number | null {
   return bytes === null ? null : bytes / factor;
@@ -49,14 +76,14 @@ function within(value: number | null, range: Range, bound: Range | undefined): b
 
 function matchesFilters(p: Provider, f: CatalogFilters, b: FilterBounds | null): boolean {
   const tm = p.telemetry;
-  if (f.location && p.location?.countryIso !== f.location) return false;
+  if (f.location.length && !f.location.includes(p.location?.countryIso ?? "")) return false;
   for (const key of RANGE_KEYS) {
     const range = f[key];
     if (range && !within(METRIC[key](p), range, b?.[key])) return false;
   }
   if (f.cpuVirtual !== null && tm.cpuVirtual !== f.cpuVirtual) return false;
-  if (f.storageHash && tm.storageGitHash !== f.storageHash) return false;
-  if (f.providerHash && tm.providerGitHash !== f.providerHash) return false;
+  if (f.storageHash.length && !f.storageHash.includes(tm.storageGitHash ?? "")) return false;
+  if (f.providerHash.length && !f.providerHash.includes(tm.providerGitHash ?? "")) return false;
   if (f.freeSpace && !hasFreeSpace(p)) return false;
   if (f.telemetry !== null && p.hasTelemetry !== f.telemetry) return false;
   if (f.stableOnly && statusTone(p) !== "green") return false;
@@ -92,12 +119,34 @@ export function computeBounds(providers: Provider[]): FilterBounds {
   return bounds;
 }
 
+// Location filters by ISO code but shows the country name; counts are of the whole catalogue.
+const FACET: Record<FacetKey, (p: Provider) => [string, string] | null> = {
+  location: (p) => (p.location ? [p.location.countryIso, p.location.country] : null),
+  storageHash: (p) => (p.telemetry.storageGitHash ? [p.telemetry.storageGitHash, p.telemetry.storageGitHash] : null),
+  providerHash: (p) => (p.telemetry.providerGitHash ? [p.telemetry.providerGitHash, p.telemetry.providerGitHash] : null),
+};
+
+export function facetOptions(providers: Provider[], key: FacetKey): FacetOption[] {
+  const options = new Map<string, FacetOption>();
+  for (const provider of providers) {
+    const pair = FACET[key](provider);
+    if (!pair) continue;
+    const [value, label] = pair;
+    const option = options.get(value);
+    if (option) option.count++;
+    else options.set(value, { value, label, count: 1 });
+  }
+  return [...options.values()].sort((a, b) => b.count - a.count);
+}
+
 const SORT_VALUE: Record<Sort["field"], (p: Provider) => number> = {
   rating: (p) => p.rating,
   uptime: (p) => p.uptime,
   price: (p) => p.price,
   working_time: (p) => p.workingTime,
 };
+
+export const SORT_FIELDS = Object.keys(SORT_VALUE) as Sort["field"][];
 
 function sortProviders(list: Provider[], sort: Sort): Provider[] {
   const value = SORT_VALUE[sort.field];
@@ -118,23 +167,25 @@ export function selectCatalog(providers: Provider[], selection: CatalogSelection
   const search = selection.search.trim().toLowerCase();
   const found = (p: Provider) =>
     p.pubkey.toLowerCase().includes(search) || (selection.names[p.pubkey] ?? "").toLowerCase().includes(search);
+  // Search reaches past the filters: the provider being looked for is often the one they hide.
   const filtered = providers.filter((p) => {
     if (selection.only && !selection.only.includes(p.pubkey)) return false;
-    if (search && !found(p)) return false;
+    if (search) return found(p);
     return matchesFilters(p, selection.filters, selection.bounds);
   });
   return sortProviders(filtered, selection.sort);
 }
 
+// The pair the catalogue opens with counts too: the dot is the only sign the list is cut.
 export function countActiveFilters(f: CatalogFilters): number {
   let count = 0;
-  if (f.location) count++;
+  if (f.location.length) count++;
   for (const key of RANGE_KEYS) {
     if (f[key]) count++;
   }
   if (f.cpuVirtual !== null) count++;
-  if (f.storageHash) count++;
-  if (f.providerHash) count++;
+  if (f.storageHash.length) count++;
+  if (f.providerHash.length) count++;
   if (f.freeSpace) count++;
   if (f.telemetry !== null) count++;
   if (f.stableOnly) count++;

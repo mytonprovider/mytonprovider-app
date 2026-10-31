@@ -238,6 +238,11 @@
             white-space: nowrap;
             text-align: left;
         }
+        /* The breakpoint is the card's own width, not the screen's: three cards in a row leave
+           the name column too little for a key. */
+        .panel-shares {
+            container-type: inline-size;
+        }
         .shares {
             --shares-neutral: #8a8a8e;
             display: grid;
@@ -249,6 +254,15 @@
         .shares-ring {
             width: 6.5rem;
             height: 6.5rem;
+        }
+        @container (max-width: 26rem) {
+            .shares {
+                grid-template-columns: minmax(0, 1fr);
+                justify-items: center;
+            }
+            .shares-list {
+                width: 100%;
+            }
         }
         .shares-track {
             stroke: var(--tblr-bg-surface-secondary);
@@ -290,7 +304,7 @@
             width: 2.6rem;
         }
         /* The only cell allowed to shrink, so the counts never wrap. */
-        .shares-name {
+        .shares-legend td.shares-name {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -454,5 +468,40 @@
             var value = table.querySelector('td[data-column="' + head.dataset.column + '"] .text-end');
             if (value) head.classList.add("text-end");
         });
+        // Cut in the middle the way the app cuts it (frontend lib/format.ts, fitKey): the end
+        // of a key is what tells two apart, and text-overflow would eat exactly that end. The
+        // fit is measured, not computed - upper-case hex is wider than digits.
+        var KEY_HEAD = 6;
+        var KEY_CHARS = 13;
+        var KEY_MIN = 8;
+
+        function fitKey(value, chars) {
+            if (value.length <= chars) return value;
+            var head = Math.min(KEY_HEAD, Math.max(1, chars - 1));
+            var tail = Math.max(0, chars - head - 1);
+            return value.slice(0, head) + "…" + (tail > 0 ? value.slice(value.length - tail) : "");
+        }
+
+        function fitKeys() {
+            document.querySelectorAll(".shares-name[data-key]").forEach(function (cell) {
+                var key = cell.dataset.key.toUpperCase();
+                var room = cell.clientWidth - parseFloat(getComputedStyle(cell).paddingRight || 0);
+                if (room <= 0) return;
+                var probe = document.createElement("span");
+                probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+                cell.appendChild(probe);
+                var chars = KEY_CHARS;
+                probe.textContent = fitKey(key, chars);
+                while (chars > KEY_MIN && probe.getBoundingClientRect().width > room) {
+                    chars -= 1;
+                    probe.textContent = fitKey(key, chars);
+                }
+                probe.remove();
+                cell.textContent = fitKey(key, chars);
+            });
+        }
+
+        fitKeys();
+        window.addEventListener("resize", fitKeys);
     </script>
 {% endblock %}

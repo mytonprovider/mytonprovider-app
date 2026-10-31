@@ -23,7 +23,8 @@ def on_connect(dbapi_connection: Any, _connection_record: Any) -> None:
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.execute("PRAGMA busy_timeout=5000")
+    # A worker is in no hurry: waiting for the single writer costs less than losing a tick.
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute("PRAGMA cache_size=-64000")
     cursor.execute("PRAGMA temp_store=MEMORY")

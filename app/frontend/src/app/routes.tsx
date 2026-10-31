@@ -2,10 +2,12 @@ import { MenuSheet } from "@/components/MenuSheet";
 import { bindSettingsButton, getStartParam } from "@/lib/telegram";
 import { Alerts } from "@/screens/Alerts/Alerts";
 import { BagExplorer } from "@/screens/BagExplorer/BagExplorer";
+import { FacetPicker } from "@/screens/Filters/FacetPicker";
 import { Filters } from "@/screens/Filters/Filters";
 import { Home } from "@/screens/Home/Home";
 import { ProviderBags } from "@/screens/ProviderBags/ProviderBags";
 import { ProviderDetail } from "@/screens/ProviderDetail/ProviderDetail";
+import { Sort } from "@/screens/Sort/Sort";
 import { Trusted } from "@/screens/Trusted/Trusted";
 import { useEffect, useRef } from "react";
 import { Navigate, Route, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -62,6 +64,10 @@ export function AppRoutes() {
       <Route path="/trusted" element={<Trusted />} />
       <Route path="/menu" element={<MenuSheet />} />
       <Route path="/filters" element={<Filters />} />
+      <Route path="/filters/location" element={<FacetPicker facet="location" />} />
+      <Route path="/filters/storageHash" element={<FacetPicker facet="storageHash" />} />
+      <Route path="/filters/providerHash" element={<FacetPicker facet="providerHash" />} />
+      <Route path="/sort" element={<Sort />} />
       <Route path="/alerts" element={<Alerts />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </LayerStack>

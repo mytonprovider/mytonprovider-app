@@ -63,7 +63,7 @@
 {# No total in the head: all three cards would print the same one, and the tile above
    already carries it. The track underneath shows through when there are no slots. #}
 {% macro shares(title, chart) %}
-    <div class="card panel">
+    <div class="card panel panel-shares">
         <div class="panel-head">
             <span class="subheader">{{ title }}</span>
         </div>
@@ -87,7 +87,8 @@
                             <i class="panel-dot{{ ' shares-rest-dot' if not item.tone }}"
                                {% if item.tone %}style="background: {{ item.tone }}"{% endif %}></i>
                         </td>
-                        <td class="shares-name" title="{{ item.label }}">{{ item.label }}</td>
+                        <td class="shares-name" title="{{ item.key or item.label }}"
+                            {% if item.key %}data-key="{{ item.key }}"{% endif %}>{{ item.label }}</td>
                         <td class="text-end text-nowrap">
                             {%- if item.href -%}<a href="{{ item.href }}">{{ item.count }}</a>
                             {%- else -%}{{ item.count }}{%- endif -%}

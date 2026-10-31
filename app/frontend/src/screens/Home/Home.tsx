@@ -5,30 +5,28 @@ import { Icon } from "@/components/Icon/Icon";
 import { RoundToggle } from "@/components/RoundToggle";
 import { TabPager } from "@/components/TabPager";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
-import { countActiveFilters, selectCatalog } from "@/data/query";
-import { hydrateFromServer, toggleBell, toggleFavorite } from "@/data/sync";
+import { EMPTY_FILTERS, countActiveFilters, selectCatalog } from "@/data/query";
+import { hydrateFromServer, toggleFavorite } from "@/data/sync";
 import type { Provider } from "@/data/types";
 import type { ReactNode } from "react";
 import { useT } from "@/i18n";
 import { cx } from "@/lib/cx";
 import { reducedMotion } from "@/lib/motion";
+import { COLD_ROWS } from "@/lib/skeletons";
 import { notify } from "@/lib/telegram";
-import { isHydrated, onHydrated } from "@/lib/storage";
 import { useAuth } from "@/stores/auth";
 import { useCatalog } from "@/stores/catalog";
-import { type Tab, listShapes, rememberShape, useCatalogQuery } from "@/stores/catalogQuery";
+import { type Tab, useCatalogQuery } from "@/stores/catalogQuery";
 import { useFavorites } from "@/stores/favorites";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Home.module.css";
 import { ProviderPane } from "./ProviderPane";
 import { TonLogo } from "./TonLogo";
 
-const RELOAD_SPIN_MS = 1100;
 const SCROLL_TOP_THRESHOLD = 360;
-const PENDING_ROWS = 4;
 const TABS = ["subs", "list", "fav"] as const;
 
 export function Home() {
@@ -46,26 +44,19 @@ export function Home() {
   const search = useCatalogQuery((s) => s.search);
   const sort = useCatalogQuery((s) => s.sort);
   const filters = useCatalogQuery((s) => s.filters);
-  const visible = useCatalogQuery((s) => s.visible);
   const setTab = useCatalogQuery((s) => s.setTab);
   const setSearch = useCatalogQuery((s) => s.setSearch);
-  const setSortField = useCatalogQuery((s) => s.setSortField);
-  const loadMore = useCatalogQuery((s) => s.loadMore);
   const resetFilters = useCatalogQuery((s) => s.resetFilters);
 
   const favorites = useFavorites((s) => s.favorites);
   const names = useNames((s) => s.providers);
   const loggedIn = useAuth((s) => s.loggedIn);
   const subscribed = useSubscriptions((s) => s.subscribed);
-  const alertsOff = useSubscriptions((s) => s.alertsOff);
 
   const panes = useRef<Record<string, HTMLDivElement | null>>({});
-  const reloadTimer = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => () => clearTimeout(reloadTimer.current), []);
   const [progress, setProgress] = useState(TABS.indexOf(tab));
   const [showTop, setShowTop] = useState(false);
   const scrubRef = useRef<(position: number | null) => void>(() => {});
-  const [spinning, setSpinning] = useState(false);
 
   useEffect(() => {
     void load();
@@ -79,37 +70,32 @@ export function Home() {
     () => selectCatalog(providers, { only: null, search, filters, sort, names, bounds }),
     [providers, search, filters, sort, names, bounds],
   );
+  // Hand-picked tabs ignore the catalogue filters: they would hide the provider somebody came for.
   const favItems = useMemo(
-    () => selectCatalog(providers, { only: favorites, search, filters, sort, names, bounds }),
-    [providers, favorites, search, filters, sort, names, bounds],
+    () => selectCatalog(providers, { only: favorites, search, filters: EMPTY_FILTERS, sort, names, bounds }),
+    [providers, favorites, search, sort, names, bounds],
   );
   const subItems = useMemo(
-    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters, sort, names, bounds }) : []),
-    [loggedIn, providers, subscribed, search, filters, sort, names, bounds],
+    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters: EMPTY_FILTERS, sort, names, bounds }) : []),
+    [loggedIn, providers, subscribed, search, sort, names, bounds],
   );
 
-  const hydrated = useSyncExternalStore(onHydrated, isHydrated);
   const activeFilters = countActiveFilters(filters);
-  const initialLoading = status !== "ready" && status !== "error";
-  const loading = spinning || initialLoading;
-  const subsLoading = !hydrated || (loggedIn && loading && subscribed.length > 0);
-  const favLoading = !hydrated || (loading && favorites.length > 0);
+  // Skeletons only while there is nothing to show: a refresh runs through the same "loading"
+  // status, and a screenful of placeholders over a scrolled list threw it back, 6000px to 547px.
+  const loading = status !== "ready" && status !== "error" && providers.length === 0;
+  const subsLoading = loggedIn && loading && subscribed.length > 0;
+  const favLoading = loading && favorites.length > 0;
   const isError = status === "error" && providers.length === 0;
 
+  // Retry after a failed load: data refreshes itself on focus and on a tick, so this is the only
+  // thing left that asks for it by hand.
   const onReload = () => {
-    if (spinning) return;
-    setSpinning(true);
-    const startedAt = performance.now();
-    void reload()
-      .then((ok) => {
-        if (!ok) notify("error");
-      })
-      .finally(() => {
-        const rest = Math.max(0, RELOAD_SPIN_MS - (performance.now() - startedAt));
-        reloadTimer.current = setTimeout(() => setSpinning(false), rest);
-      });
-    if (useAuth.getState().hasSession) {
-      hydrateFromServer().catch((error: unknown) => console.error("reload sync failed", error));
+    void reload().then((ok) => {
+      if (!ok) notify("error");
+    });
+    if (useAuth.getState().session === "open") {
+      hydrateFromServer().catch((error: unknown) => console.error("retry sync failed", error));
     }
   };
 
@@ -137,57 +123,37 @@ export function Home() {
     />
   );
 
-  const bellToggle = (provider: Provider) => (
-    <RoundToggle
-      glyph="bell"
-      size={17}
-      active={!alertsOff.includes(provider.pubkey)}
-      ariaLabel={t.notifBtn}
-      onClick={(event) => {
-        event.stopPropagation();
-        toggleBell(provider.pubkey);
-      }}
-    />
-  );
-
   const listHero = <Callout hero icon={<TonLogo />} title={t.mainTitle} desc={t.mainDesc} />;
 
   const subsHero = <Callout hero glyph="bell" title={t.subsTitle} desc={t.subsDesc} />;
 
   const favHero = <Callout hero glyph="star" title={t.favTitle} desc={t.favDesc} />;
 
-  const sortToolbar = (
+  const toolbar = (withFilters: boolean) => (
     <div className={styles.toolbar}>
-      <button type="button" className={styles.toolbarBtn} onClick={() => setSortField(sort.field)}>
+      <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/sort")}>
         <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
           <Icon glyph="chevronDown" size={13} color="var(--ts-accent)" />
         </span>
         {t.sortField[sort.field]}
       </button>
-      <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/filters")}>
-        <Icon glyph="sliders" size={16} />
-        {t.filters}
-        {activeFilters > 0 && <span className={styles.filterDot} />}
-      </button>
+      {withFilters && (
+        <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/filters")}>
+          <Icon glyph="sliders" size={16} />
+          {t.filters}
+          {activeFilters > 0 && <span className={styles.filterDot} />}
+        </button>
+      )}
     </div>
   );
 
-  const listToolbar = (listItems.length > 0 || loading) && sortToolbar;
+  const listToolbar = (listItems.length > 0 || loading) && toolbar(true);
 
-  const favToolbar = (favItems.length > 0 || favLoading) && sortToolbar;
+  const favToolbar = (favItems.length > 0 || favLoading) && toolbar(false);
 
-  const subsToolbar = (subItems.length > 0 || subsLoading) && sortToolbar;
+  const subsToolbar = (subItems.length > 0 || subsLoading) && toolbar(false);
 
   const query = search.trim();
-
-  // Plain lists only: a search or a filter narrows the tab for a moment, and that length
-  // says nothing about how far the owner had scrolled.
-  useEffect(() => {
-    if (query || activeFilters > 0) return;
-    if (!loading) rememberShape("list", Math.min(visible.list, listItems.length), listItems.length);
-    if (!favLoading) rememberShape("fav", Math.min(visible.fav, favItems.length), favItems.length);
-    if (!subsLoading) rememberShape("subs", Math.min(visible.subs, subItems.length), subItems.length);
-  }, [query, activeFilters, loading, favLoading, subsLoading, visible, listItems, favItems, subItems]);
 
   const marks = {
     subs: { glyph: "bell" as const, title: t.subsTitle },
@@ -215,16 +181,15 @@ export function Home() {
 
   const pane = (key: Tab) => {
     if (key === "subs") {
-      const rows = subItems.slice(0, visible.subs);
       return (
         <ProviderPane
           hero={subItems.length > 0 || subsLoading ? subsHero : undefined}
           toolbar={subsToolbar}
-          count={loggedIn && subItems.length > 0 ? t.showing(rows.length, subItems.length) : null}
+          count={loggedIn && subItems.length > 0 ? t.found(subItems.length) : null}
           loading={subsLoading}
-          skeletonCount={rows.length || (hydrated ? Math.min(subscribed.length, listShapes.subs.shown) : PENDING_ROWS)}
-          rows={rows}
-          trailing={bellToggle}
+          skeletonCount={Math.min(subscribed.length, COLD_ROWS)}
+          rows={subItems}
+          trailing={starToggle}
           fallback={
             !loggedIn ? (
               state("subs", t.loginNeeded, <TelegramLoginButton />)
@@ -235,33 +200,23 @@ export function Home() {
             ) : subscribed.length === 0 ? (
               state("subs", t.subsEmpty, actionButton(t.findProviders, () => setTab("list")))
             ) : (
-              state("subs", t.providersNotFound, activeFilters > 0 ? actionButton(t.reset, resetFilters) : undefined)
+              state("subs", t.goneFromCatalog)
             )
           }
           onOpen={openProvider}
-          onLoadMore={subItems.length > rows.length ? () => loadMore("subs") : undefined}
-          expectMore={subItems.length > rows.length || listShapes.subs.total > listShapes.subs.shown}
         />
       );
     }
 
     const items = key === "fav" ? favItems : listItems;
-    const rows = items.slice(0, visible[key]);
     return (
       <ProviderPane
         hero={items.length > 0 || (key === "fav" ? favLoading : loading) ? (key === "fav" ? favHero : listHero) : undefined}
         toolbar={key === "fav" ? favToolbar : listToolbar}
-        count={items.length > 0 ? t.showing(rows.length, items.length) : null}
+        count={items.length > 0 ? t.found(items.length) : null}
         loading={key === "fav" ? favLoading : loading}
-        skeletonCount={
-          rows.length ||
-          (key === "fav"
-            ? hydrated
-              ? Math.min(favorites.length, listShapes.fav.shown)
-              : PENDING_ROWS
-            : listShapes.list.shown)
-        }
-        rows={rows}
+        skeletonCount={key === "fav" ? Math.min(favorites.length, COLD_ROWS) : COLD_ROWS}
+        rows={items}
         trailing={starToggle}
         fallback={
           isError ? (
@@ -270,13 +225,13 @@ export function Home() {
             searchState(key)
           ) : key === "fav" && favorites.length === 0 ? (
             state("fav", t.favEmpty, actionButton(t.findProviders, () => setTab("list")))
+          ) : key === "fav" ? (
+            state("fav", t.goneFromCatalog)
           ) : (
             state(key, t.providersNotFound, activeFilters > 0 ? actionButton(t.reset, resetFilters) : undefined)
           )
         }
         onOpen={openProvider}
-        onLoadMore={items.length > rows.length ? () => loadMore(key) : undefined}
-        expectMore={items.length > rows.length || listShapes[key].total > listShapes[key].shown}
       />
     );
   };
@@ -298,11 +253,6 @@ export function Home() {
           }
         />
         <div className={styles.navActions}>
-          <button type="button" aria-label="Refresh" className={styles.headerBtn} onClick={onReload}>
-            <span className={spinning ? styles.spin : undefined}>
-              <Icon glyph="reload" size={20} color="var(--ts-hint)" />
-            </span>
-          </button>
           <button type="button" aria-label={t.settings} className={styles.headerBtn} onClick={() => navigate("/menu")}>
             <Icon glyph="menu" size={22} color="var(--ts-hint)" />
           </button>

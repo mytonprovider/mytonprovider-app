@@ -19,16 +19,18 @@ class SubscriptionView(BaseAdminView):
         user_relation_ref(),
         provider_ref("provider_pubkey"),
         BooleanField("has_telemetry_pass", read_only=True),
-        "alerts_enabled",
     )
-    exclude_fields_from_edit = ("user_id", "user", "provider_pubkey", "has_telemetry_pass")
     exclude_fields_from_export = ("user",)
-    inline_editable_fields = ("alerts_enabled",)
-    sortable_fields = ("user_id", "provider_pubkey", "alerts_enabled")
-    searchable_fields = ("user_id", "provider_pubkey", "alerts_enabled", "has_telemetry_pass")
+    sortable_fields = ("user_id", "provider_pubkey")
+    searchable_fields = ("user_id", "provider_pubkey", "has_telemetry_pass")
     fields_default_sort = ("user_id", "provider_pubkey")
 
     def can_create(self, request: Request) -> bool:
+        return False
+
+    # Nothing in a subscription is ours to edit: the pair is its identity and the password
+    # hash mirrors the provider.
+    def can_edit(self, request: Request) -> bool:
         return False
 
     async def repr(self, obj: Any, request: Request) -> str:

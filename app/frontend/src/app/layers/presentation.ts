@@ -1,6 +1,6 @@
 export type SheetHeight = "full" | "auto";
 
-const AUTO_HEIGHT = ["/menu"];
+const AUTO_HEIGHT = ["/menu", "/sort"];
 
 export function isBaseRoute(pathname: string): boolean {
   return pathname === "/";

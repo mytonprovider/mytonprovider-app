@@ -36,12 +36,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.spin {
-  composes: spin from "../../styles/anim.module.css";
-  display: inline-flex;
-}
-
-
 
 .searchClear {
   composes: clear from "../../styles/list.module.css";
@@ -100,17 +94,6 @@
 
 .list {
   composes: list from "../../styles/list.module.css";
-}
-
-/* The room "load more" takes, held while the rows are skeletons so the bottom stays put. */
-.moreBar {
-  composes: pulse from "../../styles/anim.module.css";
-  display: block;
-  width: 120px;
-  height: 18px;
-  margin: 26px auto 14px;
-  border-radius: 6px;
-  background: var(--ts-seg);
 }
 
 .fab {

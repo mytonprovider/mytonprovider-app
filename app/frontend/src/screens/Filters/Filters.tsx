@@ -1,4 +1,3 @@
-import { tick } from "@/lib/telegram";
 import { BottomBar } from "@/components/BottomBar";
 import { Card } from "@/components/Card";
 import { Icon } from "@/components/Icon/Icon";
@@ -9,8 +8,8 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SegmentControl } from "@/components/SegmentControl";
 import { Toggle } from "@/components/Toggle";
-import { selectCatalog } from "@/data/query";
-import type { CatalogFilters, Provider, Range, RangeKey, SortField } from "@/data/types";
+import { facetOptions, selectCatalog } from "@/data/query";
+import type { CatalogFilters, FacetKey, Range, RangeKey } from "@/data/types";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
 import { cx } from "@/lib/cx";
@@ -39,7 +38,6 @@ const SLIDER_META: Record<RangeKey, { labelKey: DictStringKey; dec: number; step
   ping: { labelKey: "pingF", dec: 0, step: 1, unit: "ms" },
 };
 
-const SORT_FIELDS: SortField[] = ["rating", "uptime", "price", "working_time"];
 const PROVIDER_SLIDERS: RangeKey[] = ["rating", "uptime", "price", "bag", "age", "minSpan", "maxSpan"];
 const HARDWARE_SLIDERS: RangeKey[] = ["cores", "ram", "space", "diskRead", "diskWrite", "download", "upload", "ping"];
 
@@ -69,38 +67,22 @@ function FilterSlider({
   );
 }
 
-function ChipRow({
-  options,
-  value,
-  anyLabel,
-  mono,
-  onChange,
-}: {
-  options: string[];
-  value: string | null;
-  anyLabel: string;
-  mono?: boolean;
-  onChange: (value: string | null) => void;
-}) {
+function FacetRow({ facet, value, anyLabel, mono }: { facet: FacetKey; value: string[]; anyLabel: string; mono?: boolean }) {
+  const t = useT();
+  const navigate = useNavigate();
+  const providers = useCatalog((s) => s.providers);
+  const options = useMemo(() => facetOptions(providers, facet), [providers, facet]);
+  const label = value.length === 0 ? anyLabel : (options.find((option) => value.includes(option.value))?.label ?? value[0]);
+
   return (
-    <div className={styles.chips}>
-      {[null, ...options].map((option) => {
-        const active = value === option;
-        return (
-          <button
-            key={option ?? "any"}
-            type="button"
-            className={cx(styles.chip, mono && option !== null && styles.chipMono, active && styles.chipActive)}
-            onClick={() => {
-              tick();
-              onChange(option);
-            }}
-          >
-            {option ?? anyLabel}
-          </button>
-        );
-      })}
-    </div>
+    <button type="button" className={styles.facetRow} onClick={() => navigate(`/filters/${facet}`)}>
+      <span className={styles.sliderLabel}>{t[facet]}</span>
+      <span className={styles.facetValue}>
+        <span className={cx(mono && value.length > 0 && styles.facetMono)}>{label}</span>
+        {value.length > 1 && <span className={styles.facetMore}>+{value.length - 1}</span>}
+        <Icon glyph="chevron" size={16} color="var(--ts-hint)" />
+      </span>
+    </button>
   );
 }
 
@@ -117,46 +99,29 @@ export function Filters() {
   const filters = useCatalogQuery((s) => s.filters);
   const sort = useCatalogQuery((s) => s.sort);
   const search = useCatalogQuery((s) => s.search);
+  const setSearch = useCatalogQuery((s) => s.setSearch);
   const setFilters = useCatalogQuery((s) => s.setFilters);
-  const setSortField = useCatalogQuery((s) => s.setSortField);
   const resetFilters = useCatalogQuery((s) => s.resetFilters);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const locations = useMemo(() => {
-    const set = new Set<string>();
-    for (const provider of providers) {
-      if (provider.location?.countryIso) set.add(provider.location.countryIso);
-    }
-    return [...set];
-  }, [providers]);
-
-  const hashes = useMemo(() => {
-    const collect = (pick: (p: Provider) => string | null) => {
-      const counts = new Map<string, number>();
-      for (const provider of providers) {
-        const hash = pick(provider);
-        if (hash) counts.set(hash, (counts.get(hash) ?? 0) + 1);
-      }
-      return [...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0));
-    };
-    return {
-      storage: collect((p) => p.telemetry.storageGitHash),
-      provider: collect((p) => p.telemetry.providerGitHash),
-    };
-  }, [providers]);
-
   const resultCount = useMemo(
-    () => selectCatalog(providers, { only: null, search, filters, sort, names, bounds }).length,
-    [providers, search, filters, sort, names, bounds],
+    () => selectCatalog(providers, { only: null, search: "", filters, sort, names, bounds }).length,
+    [providers, filters, sort, names, bounds],
   );
 
   const patch = (part: Partial<CatalogFilters>) => setFilters({ ...filters, ...part });
   const setRange = (key: RangeKey) => (range: Range) => patch({ [key]: range });
 
   const back = () => navigate(-1);
+
+  // A search reaches past the filters, so leaving it on would show the list the count does not mean.
+  const done = () => {
+    if (search) setSearch("");
+    navigate(-1);
+  };
 
   const header = (
     <ScreenHeader
@@ -179,36 +144,10 @@ export function Filters() {
       header={header}
       bottom={
         <BottomBar>
-          <MainButton label={t.showResults(resultCount)} onClick={back} />
+          <MainButton label={t.showResults(resultCount)} onClick={done} />
         </BottomBar>
       }
     >
-      <SectionHeader title={t.sortBy} />
-      <Card>
-        {SORT_FIELDS.map((field) => {
-          const active = sort.field === field;
-          return (
-            <div
-              key={field}
-              className={cx(styles.sortRow, active && styles.sortRowActive)}
-              onClick={() => {
-                tick();
-                setSortField(field);
-              }}
-            >
-              <span className={cx(styles.sortLabel, active && styles.sortLabelActive)}>
-                {t.sortField[field]}
-              </span>
-              {active && (
-                <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
-                  <Icon glyph="chevronDown" size={16} color="var(--ts-accent)" />
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </Card>
-
       <SectionHeader title={t.providerGroup} />
       <Card className={styles.padCard}>
         {PROVIDER_SLIDERS.map((key) => (
@@ -220,13 +159,7 @@ export function Filters() {
             onChange={setRange(key)}
           />
         ))}
-        <div className={styles.subLabel}>{t.location}</div>
-        <ChipRow
-          options={locations}
-          value={filters.location}
-          anyLabel={t.anyLoc}
-          onChange={(value) => patch({ location: value })}
-        />
+        <FacetRow facet="location" value={filters.location} anyLabel={t.anyLoc} />
       </Card>
 
       <SectionHeader title={t.hardware} />
@@ -258,22 +191,8 @@ export function Filters() {
 
       <SectionHeader title={t.software} />
       <Card className={styles.padCard}>
-        <div className={styles.subLabel}>{t.storageHash}</div>
-        <ChipRow
-          options={hashes.storage}
-          value={filters.storageHash}
-          anyLabel={t.any}
-          mono
-          onChange={(value) => patch({ storageHash: value })}
-        />
-        <div className={styles.subLabel}>{t.providerHash}</div>
-        <ChipRow
-          options={hashes.provider}
-          value={filters.providerHash}
-          anyLabel={t.any}
-          mono
-          onChange={(value) => patch({ providerHash: value })}
-        />
+        <FacetRow facet="storageHash" value={filters.storageHash} anyLabel={t.any} mono />
+        <FacetRow facet="providerHash" value={filters.providerHash} anyLabel={t.any} mono />
       </Card>
 
       <SectionHeader title={t.statusGroup} />

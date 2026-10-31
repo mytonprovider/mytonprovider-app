@@ -3,22 +3,23 @@ import { CopyRow } from "@/components/CopyRow";
 import { ExplorerAddressRow } from "@/components/ExplorerAddressRow";
 import { Field } from "@/components/Field";
 import { FieldRow } from "@/components/FieldRow";
-import { LoadMore } from "@/components/LoadMore";
 import { ProviderHeader } from "@/components/ProviderHeader";
 import { Screen } from "@/components/Screen";
 import { StatusDot } from "@/components/StatusDot";
 import type { Bag, BagFilter } from "@/data/backend";
+import { useRowWindow } from "@/hooks/useRowWindow";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
 import { toUserFriendly } from "@/lib/address";
 import { SC } from "@/lib/colors";
 import { EMPTY, ago, formatBytes, shorten } from "@/lib/format";
 import { bagGatewayUrl } from "@/lib/gateway";
-import { BAGS_PAGE_SIZE } from "@/lib/paging";
+import { onRevalidate } from "@/lib/revalidate";
+import { COLD_CARDS } from "@/lib/skeletons";
 import { describeStatus, filterColor, reasonText, reasonTone, stateText, stateTone } from "@/lib/status";
 import { useCatalog } from "@/stores/catalog";
 import { bucketKey, useProviderBags } from "@/stores/providerBags";
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import styles from "./ProviderBags.module.css";
 
@@ -53,7 +54,6 @@ export function ProviderBags() {
   const loadBucket = useProviderBags((s) => s.load);
 
   const [query, setQuery] = useState("");
-  const [visible, setVisible] = useState(BAGS_PAGE_SIZE);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -62,12 +62,10 @@ export function ProviderBags() {
 
   useEffect(() => {
     setFailed(false);
-    loadBucket(pubkey, state).catch(() => setFailed(true));
+    const reload = () => loadBucket(pubkey, state).catch(() => setFailed(true));
+    void reload();
+    return onRevalidate(() => void reload());
   }, [pubkey, state, loadBucket]);
-
-  useEffect(() => {
-    setVisible(BAGS_PAGE_SIZE);
-  }, [pubkey, state, query]);
 
   // The bucket is in memory, so the search filters it instead of asking the server: no
   // debounce, no flicker, and a return from a bag costs nothing.
@@ -76,7 +74,8 @@ export function ProviderBags() {
   const found = term
     ? items.filter((bag) => (bag.bag_id ?? "").startsWith(term) || bag.address.toLowerCase().startsWith(term))
     : items;
-  const rows = found.slice(0, visible);
+  const listRef = useRef<HTMLDivElement>(null);
+  const { start, end, padTop, padBottom } = useRowWindow(listRef, found.length);
   const loading = bucket === undefined && !failed;
   const truncated = bucket !== undefined && items.length < bucket.total;
 
@@ -113,7 +112,7 @@ export function ProviderBags() {
             <span className={styles.countBar} />
           </div>
           <div className={styles.list}>
-            {Array.from({ length: BAGS_PAGE_SIZE }, (_, i) => (
+            {Array.from({ length: COLD_CARDS }, (_, i) => (
               <BagCardSkeleton key={i} />
             ))}
           </div>
@@ -127,8 +126,8 @@ export function ProviderBags() {
           <div className={styles.count}>
             {truncated ? t.showing(items.length, bucket.total) : `${t[TITLES[state]]} · ${found.length}`}
           </div>
-          <div className={styles.list}>
-            {rows.map((bag) => (
+          <div ref={listRef} className={styles.list} style={{ paddingTop: padTop, paddingBottom: padBottom }}>
+            {found.slice(start, end).map((bag) => (
               <div key={bag.address} className={styles.card} onClick={openBag(bag)}>
                 <div className={styles.title} style={{ color: SC[stateTone(bag.state)] }}>
                   {stateText(bag.state, t)}
@@ -162,7 +161,6 @@ export function ProviderBags() {
               </div>
             ))}
           </div>
-          {found.length > rows.length && <LoadMore onClick={() => setVisible((shown) => shown + BAGS_PAGE_SIZE)} />}
         </>
       )}
     </Screen>

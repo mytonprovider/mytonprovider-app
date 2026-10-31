@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 BATCH = 100
 PAGE = 100
+# A tick reads at most 25k transactions of one wallet; a deeper history continues on the next.
+PAGES_PER_TICK = 250
 
 Link = tuple[int, str]
 
@@ -35,7 +37,7 @@ class ScanWalletsWorker(BaseWorker):
         scanned = 0
         for provider in providers:
             head = heads.get(provider.wallet_address)
-            if head is None or not head.last_transaction_lt or not head.last_transaction_hash:
+            if head is None or not head.last_transaction_lt:
                 continue
             pubkey = provider.pubkey
             try:
@@ -62,15 +64,9 @@ async def _heads(addresses: list[str]) -> dict[str, Account]:
 async def _scan_wallet(
     session: AsyncSession, pubkey: str, wallet_address: str, last_wallet_lt: int | None, head: Account
 ) -> int:
-    assert head.last_transaction_lt is not None and head.last_transaction_hash is not None
     transactions: list[Transaction] = []
     if head.last_transaction_lt != last_wallet_lt:
-        walked = await _walk_back(
-            wallet_address, (head.last_transaction_lt, head.last_transaction_hash), last_wallet_lt
-        )
-        if walked is None:
-            return 0
-        transactions = walked
+        transactions = await _walk_forward(wallet_address, last_wallet_lt)
     provider = await ProviderRepo(session).get(pubkey)
     if provider is None:
         return 0
@@ -82,49 +78,70 @@ async def _scan_wallet(
     if transactions:
         provider.earned += earned_delta
         provider.balance = (provider.balance or 0) + balance_delta
-        provider.last_wallet_lt = head.last_transaction_lt
-    _check_balance(provider, head)
+        provider.last_wallet_lt = transactions[-1].lt
+    _check_balance(provider, _chain_balance(transactions, head, last_wallet_lt))
     return int(bool(transactions))
 
 
-def _check_balance(provider: ProviderModel, head: Account) -> None:
-    if head.balance is not None and provider.balance != head.balance:
+# Our sum matches the chain where the cursor stands, so a wallet caught up with its head is
+# checked against the head itself. Mid-history the only balance on offer is the one the index
+# stores with a transaction, and it fills it for about half of them (509 of 1000 on 2026-10-30).
+def _chain_balance(transactions: list[Transaction], head: Account, cursor_lt: int | None) -> int | None:
+    if transactions:
+        cursor_lt = transactions[-1].lt
+    if head.last_transaction_lt == cursor_lt:
+        return head.balance
+    state = transactions[-1].account_state_after if transactions else None
+    return state.balance if state is not None else None
+
+
+def _check_balance(provider: ProviderModel, chain_balance: int | None) -> None:
+    if chain_balance is not None and provider.balance != chain_balance:
         logger.warning(
-            "balance drift for %s: computed %d, chain %d", provider.pubkey[:8], provider.balance, head.balance
+            "balance drift for %s: computed %d, chain %d", provider.pubkey[:8], provider.balance, chain_balance
         )
 
 
-# The index shows transactions out of order, so the history is walked down the account's own
-# chain and applied only once every link closes; a gap leaves the cursor where it is.
-async def _walk_back(address: str, head: Link, stop_lt: int | None) -> list[Transaction] | None:
+# The index shows transactions out of order, so the chain is walked up from the cursor and every
+# link is checked against the transaction below it; the cursor moves only over links that closed.
+async def _walk_forward(address: str, cursor_lt: int | None) -> list[Transaction]:
     transactions: list[Transaction] = []
-    expect = head
-    while True:
-        page = (await toncenter.transactions(address, end_lt=expect[0], limit=PAGE, sort="desc")).transactions
-        taken, following = _take_chain(page, expect, stop_lt)
-        if taken is None:
-            logger.warning("chain gap for %s below lt %d, waiting for the index", short_address(address), expect[0])
-            return None
+    expect: Link | None = None
+    start_lt = cursor_lt
+    for _ in range(PAGES_PER_TICK):
+        page = (await toncenter.transactions(address, start_lt=start_lt, limit=PAGE, sort="asc")).transactions
+        # start_lt is inclusive, so the cursor transaction comes back first and anchors the walk.
+        if expect is None and cursor_lt is not None:
+            if not page or page[0].lt != cursor_lt:
+                logger.warning("cursor %d of %s is not in the index", cursor_lt, short_address(address))
+                return transactions
+            expect = (page[0].lt, page[0].hash)
+        if not page:
+            return transactions
+        taken, following = _take_chain(page, expect)
         transactions.extend(taken)
         if following is None:
-            return list(reversed(transactions))
+            above = transactions[-1].lt if transactions else cursor_lt
+            logger.warning("chain gap for %s above lt %s, waiting for the index", short_address(address), above)
+            return transactions
         expect = following
+        if len(page) < PAGE:
+            return transactions
+        start_lt = expect[0]
+    logger.info("walked %d pages for %s, continuing next tick", PAGES_PER_TICK, short_address(address))
+    return transactions
 
 
-def _take_chain(
-    page: list[Transaction], expect: Link, stop_lt: int | None
-) -> tuple[list[Transaction] | None, Link | None]:
+def _take_chain(page: list[Transaction], expect: Link | None) -> tuple[list[Transaction], Link | None]:
     taken: list[Transaction] = []
     for transaction in page:
-        if (transaction.lt, transaction.hash) != expect:
-            return None, expect
-        if stop_lt is not None and transaction.lt <= stop_lt:
-            return (taken, None) if transaction.lt == stop_lt else (None, expect)
-        taken.append(transaction)
-        if not transaction.prev_trans_lt:
+        if (transaction.lt, transaction.hash) == expect:
+            continue
+        if expect is not None and (transaction.prev_trans_lt, transaction.prev_trans_hash) != expect:
             return taken, None
-        expect = (transaction.prev_trans_lt, transaction.prev_trans_hash)
-    return (taken, expect) if page else (None, expect)
+        taken.append(transaction)
+        expect = (transaction.lt, transaction.hash)
+    return taken, expect
 
 
 def _transaction_metrics(transaction: Transaction) -> tuple[int, int]:

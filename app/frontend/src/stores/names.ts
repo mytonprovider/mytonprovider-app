@@ -1,4 +1,3 @@
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -28,6 +27,6 @@ export const useNames = create<NamesState>()(
       setAddress: (address, name) => set((state) => ({ addresses: assign(state.addresses, address, name) })),
       setAll: (providers, addresses) => set({ providers, addresses }),
     }),
-    appPersist("mtp-names"),
+    { name: "mtp-names" },
   ),
 );

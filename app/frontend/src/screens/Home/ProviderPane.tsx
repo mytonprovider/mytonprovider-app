@@ -1,7 +1,7 @@
-import { LoadMore } from "@/components/LoadMore";
 import { ProviderRow, ProviderRowPlaceholder } from "@/components/ProviderRow";
 import type { Provider } from "@/data/types";
-import type { ReactNode } from "react";
+import { useRowWindow } from "@/hooks/useRowWindow";
+import { type ReactNode, useRef } from "react";
 import styles from "./Home.module.css";
 
 interface ProviderPaneProps {
@@ -14,8 +14,6 @@ interface ProviderPaneProps {
   trailing: (provider: Provider) => ReactNode;
   fallback?: ReactNode;
   onOpen: (pubkey: string) => void;
-  onLoadMore?: () => void;
-  expectMore?: boolean;
 }
 
 export function ProviderPane({
@@ -28,9 +26,10 @@ export function ProviderPane({
   trailing,
   fallback,
   onOpen,
-  onLoadMore,
-  expectMore,
 }: ProviderPaneProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const { start, end, padTop, padBottom } = useRowWindow(listRef, rows.length);
+
   return (
     <>
       {hero}
@@ -44,8 +43,8 @@ export function ProviderPane({
           ))}
         </div>
       ) : rows.length > 0 ? (
-        <div className={styles.list}>
-          {rows.map((provider) => (
+        <div ref={listRef} className={styles.list} style={{ paddingTop: padTop, paddingBottom: padBottom }}>
+          {rows.slice(start, end).map((provider) => (
             <ProviderRow
               key={provider.pubkey}
               provider={provider}
@@ -57,10 +56,6 @@ export function ProviderPane({
       ) : (
         <div className={styles.fallback}>{fallback}</div>
       )}
-
-      {loading
-        ? expectMore && <span className={styles.moreBar} />
-        : onLoadMore && <LoadMore onClick={onLoadMore} />}
     </>
   );
 }

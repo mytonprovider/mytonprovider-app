@@ -1,5 +1,4 @@
 import type { Lang } from "@/i18n/types";
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -29,6 +28,6 @@ export const useSettings = create<SettingsState>()(
       setLang: (lang) => set({ lang, langAuto: false }),
       setExplorer: (explorer) => set({ explorer }),
     }),
-    appPersist("mtp-settings"),
+    { name: "mtp-settings" },
   ),
 );

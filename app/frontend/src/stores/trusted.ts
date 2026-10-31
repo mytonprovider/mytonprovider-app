@@ -1,4 +1,3 @@
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -20,6 +19,6 @@ export const useTrusted = create<TrustedState>()(
         })),
       setAll: (addresses) => set({ addresses }),
     }),
-    appPersist("mtp-trusted"),
+    { name: "mtp-trusted" },
   ),
 );

@@ -44,7 +44,6 @@ class Names(BaseModel):
 
 class SubscriptionOut(BaseModel):
     pubkey: str
-    alerts_enabled: bool
 
 
 class ChannelOut(BaseModel):
@@ -88,10 +87,6 @@ class SubscribeRequest(BaseModel):
     password: str = Field(min_length=1, max_length=256)
 
 
-class BellPatch(BaseModel):
-    alerts_enabled: bool
-
-
 def _clean_name(value: str) -> str:
     return " ".join(value.split())[:NAME_MAX].strip()
 
@@ -108,10 +103,7 @@ def _clean_names(source: dict[str, str], pattern: re.Pattern[str], lower: bool) 
 
 
 def subscription_out(subscription: SubscriptionModel) -> SubscriptionOut:
-    return SubscriptionOut(
-        pubkey=subscription.provider_pubkey,
-        alerts_enabled=subscription.alerts_enabled,
-    )
+    return SubscriptionOut(pubkey=subscription.provider_pubkey)
 
 
 async def profile_response(session: AsyncSession, user: UserModel) -> ProfileResponse:
@@ -256,21 +248,6 @@ async def subscribe(
         provider_pubkey=pubkey,
         telemetry_pass=stored_pass,
     )
-    await session.commit()
-    return subscription_out(subscription)
-
-
-@router.patch("/subscriptions/{pubkey}")
-async def patch_subscription(
-    pubkey: str,
-    body: BellPatch,
-    user: UserModel = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
-) -> SubscriptionOut:
-    subscription = await SubscriptionRepo(session).get(user.id, pubkey.lower())
-    if subscription is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Subscription not found")
-    subscription.alerts_enabled = body.alerts_enabled
     await session.commit()
     return subscription_out(subscription)
 

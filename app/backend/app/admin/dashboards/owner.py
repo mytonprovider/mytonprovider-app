@@ -248,6 +248,8 @@ def _shares(rows: Sequence[dict[str, Any]], name: Callable[[dict[str, Any]], str
         {
             "tone": TONES[index] if index < SHARES else "",
             "label": name(row),
+            # The full key rides along so the browser can refit it to the column it got.
+            "key": row.get("key", ""),
             "count": spaced(row["slots"]),
             "share": _share(row["slots"], total),
             "href": row["slots_href"],

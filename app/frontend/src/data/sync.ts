@@ -4,6 +4,7 @@ import { ALERT_TYPES, defaultThreshold, type AlertTypeMap, type ThresholdMap } f
 import { normalizeLang } from "@/i18n";
 import type { AlertKey, Lang } from "@/i18n/types";
 import { toUserFriendly } from "@/lib/address";
+import { readLocal, writeLocal } from "@/lib/storage";
 import { useAlerts } from "@/stores/alerts";
 import { makeAuthUser, useAuth } from "@/stores/auth";
 import { useSettings } from "@/stores/settings";
@@ -16,7 +17,7 @@ import { useTrusted } from "@/stores/trusted";
 let chain: Promise<unknown> = Promise.resolve();
 
 function queue(label: string, action: () => Promise<unknown>): void {
-  if (!useAuth.getState().hasSession) return;
+  if (useAuth.getState().session !== "open") return;
   chain = chain.then(action).catch((error: unknown) => console.error(`${label} failed`, error));
 }
 
@@ -52,7 +53,14 @@ function namesPayload(): NamesPayload {
   return { providers, addresses };
 }
 
+// The profile carries settings someone changed on another device, so a tick asks for it on the
+// same terms as the catalogue. A login adopts preferences and has to read through; a failed read
+// leaves the mark alone, so a retry is never held back.
+const STALE_MS = 120_000;
+let profileAt = 0;
+
 export async function hydrateFromServer(adoptPreferences = false): Promise<void> {
+  if (!adoptPreferences && Date.now() - profileAt < STALE_MS) return;
   flushAlerts();
   await chain;
   let profile: Awaited<ReturnType<typeof backend.profile>>;
@@ -68,7 +76,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
   if (first) {
     useAuth.getState().login(makeAuthUser(first, rest.join(" "), profile.username, profile.photo_url));
   }
-  if (!localStorage.getItem(MIGRATED_KEY)) {
+  if (!readLocal(MIGRATED_KEY)) {
     const favorites = useFavorites.getState().favorites;
     const trusted = useTrusted.getState().addresses;
     const names = namesPayload();
@@ -80,15 +88,14 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
         addresses: { ...profile.names.addresses, ...names.addresses },
       });
     }
-    localStorage.setItem(MIGRATED_KEY, "1");
+    writeLocal(MIGRATED_KEY, "1");
   }
+  profileAt = Date.now();
   useFavorites.getState().setAll(profile.favorites);
   useTrusted.getState().setAll(profile.trusted_addresses);
   useChannels.getState().setAll(profile.channels);
   useNames.getState().setAll(profile.names.providers, profile.names.addresses);
-  useSubscriptions
-    .getState()
-    .setAll(profile.subscriptions.map((s) => ({ pubkey: s.pubkey, alertsEnabled: s.alerts_enabled })));
+  useSubscriptions.getState().setAll(profile.subscriptions.map((s) => s.pubkey));
   const { types, thresholds } = toAlertMaps(profile.alerts);
   useAlerts.getState().setAll(profile.alerts.enabled, types, thresholds);
   if (adoptPreferences) {
@@ -125,12 +132,6 @@ export function setAddressName(address: string, name: string): void {
   useNames.getState().setAddress(address, name);
   const names = namesPayload();
   queue("names sync", () => backend.putNames(names));
-}
-
-export function toggleBell(pubkey: string): void {
-  useSubscriptions.getState().toggleAlert(pubkey);
-  const enabled = !useSubscriptions.getState().alertsOff.includes(pubkey);
-  queue("subscription patch", () => backend.patchSubscription(pubkey, enabled));
 }
 
 export function unsubscribeProvider(pubkey: string): void {

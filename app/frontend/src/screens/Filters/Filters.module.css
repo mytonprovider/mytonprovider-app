@@ -2,79 +2,107 @@
   padding: 14px;
 }
 
-.sortRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 13px 15px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.sortRowActive {
-  background: var(--ts-seg);
-}
-
-.sortLabel {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--ts-text);
-}
-
-.sortLabelActive {
-  font-weight: 600;
-}
-
-.sortChevron {
-  composes: chevron from "../../styles/list.module.css";
-}
-
-.sortChevronUp {
-  composes: chevronUp from "../../styles/list.module.css";
-}
-
 .subLabel {
   margin-bottom: 8px;
   font-size: 13.5px;
   color: var(--ts-hint);
 }
 
-.chips {
+/* A row, not a chip strip: the strip scrolled sideways with no scrollbar to reach its far end. */
+.facetRow {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.chips::-webkit-scrollbar {
-  display: none;
-}
-
-.chip {
-  flex: none;
-  padding: 8px 15px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 0;
   border: none;
-  border-radius: 16px;
-  background: var(--ts-card2);
-  color: var(--ts-text);
-  font-size: 13.5px;
-  font-weight: 500;
+  background: none;
   font-family: inherit;
-  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.chipMono {
+.facetValue {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ts-text);
+}
+
+.facetValue > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.facetMore {
+  flex: none;
+  color: var(--ts-hint);
+}
+
+.facetMono {
   font-family: var(--ts-font-mono);
 }
 
-.chipActive {
-  background: var(--ts-accent);
-  color: #fff;
+/* The screen header leaves no gap of its own. */
+.pickerCard {
+  margin-top: 14px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 15px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Always as wide as the tick, so the names keep one left edge. */
+.tick {
+  flex: none;
+  display: flex;
+  width: 17px;
+}
+
+/* Fixed: the bold active row measures 1px taller, and the list below shifted on every tick. */
+.optionName {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 18px;
+  color: var(--ts-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Colour, not a fill: a grey wash is the pressed state everywhere else. */
+.optionActive {
   font-weight: 600;
+  color: var(--ts-accent);
+}
+
+.optionMono {
+  font-family: var(--ts-font-mono);
+  letter-spacing: 0.2px;
+}
+
+.optionCount {
+  flex: none;
+  font-size: 13.5px;
+  color: var(--ts-hint);
+  font-variant-numeric: tabular-nums;
 }
 
 .sliderBlock {

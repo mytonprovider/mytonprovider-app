@@ -75,7 +75,7 @@ export function OwnerPanel({
   const t = useT();
   const navigate = useNavigate();
   const loggedIn = useAuth((s) => s.loggedIn);
-  const hasSession = useAuth((s) => s.hasSession);
+  const session = useAuth((s) => s.session);
   const thresholds = useAlerts((s) => s.thresholds);
 
   const [tab, setTab] = useState<OwnerTab>("overview");
@@ -94,7 +94,7 @@ export function OwnerPanel({
   const nowSec = Math.floor(Date.now() / 1000);
   const explorer = useSettings((state) => state.explorer);
   const walletUrl = explorerAddressUrl(provider.address, explorer);
-  const loading = hasSession && !payload && !denied && !failed;
+  const loading = loggedIn && session !== "closed" && !payload && !denied && !failed;
   const bags = payload?.bags ?? EMPTY_BAGS;
 
   return (
@@ -244,11 +244,11 @@ export function OwnerPanel({
           </div>
         </>
       ) : loggedIn && !denied ? (
-        <Callout desc={hasSession ? t.ownerFailed : t.sessionFailed}>
+        <Callout desc={session === "open" ? t.ownerFailed : t.sessionFailed}>
           <button
             type="button"
             className={styles.calloutBtn}
-            onClick={hasSession ? refreshOwner : () => void establishSession()}
+            onClick={session === "open" ? refreshOwner : () => void establishSession()}
           >
             {t.retry}
           </button>

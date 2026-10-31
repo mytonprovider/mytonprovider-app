@@ -19,12 +19,13 @@ export const ru: Dict = {
   fav: "Избранное",
   filters: "Фильтры",
   sortBy: "Сортировка",
+  done: "Готово",
   searchPlaceholder: "Поиск по имени или ключу",
   searchSubs: "Поиск в подписках",
   searchFav: "Поиск в избранном",
   searchEmpty: "На этой вкладке ничего не найдено",
-  loadMore: "Показать ещё",
   providersNotFound: "Нет провайдеров по этим фильтрам",
+  goneFromCatalog: "Этих провайдеров больше нет в каталоге",
   loadError: "Не удалось загрузить провайдеров",
   ownerFailed: "Не удалось загрузить данные",
   sessionFailed: "Не удалось войти. Перезапустите приложение",
@@ -225,6 +226,7 @@ export const ru: Dict = {
   pingF: "Пинг",
   unitDays: "дн",
   searchInCatalog: (n: number) => `Показать в каталоге: ${n}`,
+  found: (total: number) => `${total} ${pluralRu(total, "провайдер", "провайдера", "провайдеров")}`,
   showing: (shown: number, total: number) =>
     `Показано ${shown} из ${total} ${pluralRu(total, "провайдера", "провайдеров", "провайдеров")}`,
   showResults: (n: number) => `Показать ${n}`,
@@ -240,7 +242,6 @@ export const ru: Dict = {
     reports: "Отчёты",
   },
   save: "Сохранить",
-  notifBtn: "Уведомления",
   alertNames: {
     telemetry_lost: "Нет телеметрии",
     not_online: "Не в сети",
@@ -293,6 +294,10 @@ export const ru: Dict = {
     uptime: "Доступность",
     price: "Цена",
     working_time: "Время работы",
+  },
+  sortDir: {
+    desc: "по убыванию",
+    asc: "по возрастанию",
   },
   status: {
     noData: "Нет данных",

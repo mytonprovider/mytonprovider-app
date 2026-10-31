@@ -1,4 +1,5 @@
 import { useT } from "@/i18n";
+import { readLocal, writeLocal } from "@/lib/storage";
 import { isInTelegram } from "@/lib/telegram";
 import { useEffect, useState } from "react";
 import styles from "./InstallBanner.module.css";
@@ -45,14 +46,14 @@ export function InstallBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (isInTelegram() || isStandalone() || localStorage.getItem(DISMISS_KEY)) return;
+    if (isInTelegram() || isStandalone() || readLocal(DISMISS_KEY)) return;
     if (isIOSSafari()) setVisible(true);
   }, []);
 
   if (!visible) return null;
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, "1");
+    writeLocal(DISMISS_KEY, "1");
     setVisible(false);
   };
 

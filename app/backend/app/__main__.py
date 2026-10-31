@@ -13,25 +13,6 @@ from starlette.types import Scope
 from app import admin, api, bot, config, workers
 from app.http import mytonprovider, toncenter
 
-IMMUTABLE_CACHE = "public, max-age=31536000, immutable"
-REVALIDATE_CACHE = "no-cache"
-
-
-# Starlette sends no Cache-Control, and without it the Telegram webview caches
-# heuristically (~10% of the last-modified age), so a deploy needs a manual reload.
-class CachedStaticFiles(StaticFiles):
-    def file_response(
-        self,
-        full_path: PathLike,
-        stat_result: os.stat_result,
-        scope: Scope,
-        status_code: int = 200,
-    ) -> Response:
-        response = super().file_response(full_path, stat_result, scope, status_code)
-        hashed = scope["path"].startswith("/assets/")
-        response.headers["cache-control"] = IMMUTABLE_CACHE if hashed else REVALIDATE_CACHE
-        return response
-
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -46,6 +27,20 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await workers.stop()
         await toncenter.close_session()
         await mytonprovider.close_session()
+
+
+class CachedStaticFiles(StaticFiles):
+    def file_response(
+        self,
+        full_path: PathLike,
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        hashed = scope["path"].startswith("/assets/")
+        response.headers["cache-control"] = "public, max-age=31536000, immutable" if hashed else "no-cache"
+        return response
 
 
 def main() -> None:
@@ -69,7 +64,6 @@ def main() -> None:
     app.include_router(api.router)
     admin.mount(app)
     app.mount("/", CachedStaticFiles(directory=static_dir, html=True))
-
     uvicorn.run(app, host="0.0.0.0", port=8080, forwarded_allow_ips=config.TRUSTED_PROXIES)
 
 

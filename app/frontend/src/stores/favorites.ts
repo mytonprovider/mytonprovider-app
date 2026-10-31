@@ -1,4 +1,3 @@
-import { appPersist } from "@/lib/storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -20,6 +19,6 @@ export const useFavorites = create<FavoritesState>()(
         })),
       setAll: (favorites) => set({ favorites }),
     }),
-    appPersist("mtp-favorites"),
+    { name: "mtp-favorites" },
   ),
 );
