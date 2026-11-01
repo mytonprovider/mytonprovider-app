@@ -23,7 +23,7 @@ import { useCatalog } from "@/stores/catalog";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import styles from "./BagExplorer.module.css";
 
 const REPORT_BOT = "https://t.me/bagidreport_bot";

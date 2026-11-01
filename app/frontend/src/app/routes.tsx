@@ -10,7 +10,7 @@ import { ProviderDetail } from "@/screens/ProviderDetail/ProviderDetail";
 import { Sort } from "@/screens/Sort/Sort";
 import { Trusted } from "@/screens/Trusted/Trusted";
 import { useEffect, useRef } from "react";
-import { Navigate, Route, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, useLocation, useNavigate, useParams } from "react-router";
 import { hasDialogs } from "./layers/context";
 import { LayerStack } from "./layers/LayerStack";
 

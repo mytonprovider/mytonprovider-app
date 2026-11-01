@@ -21,7 +21,7 @@ import { useFavorites } from "@/stores/favorites";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import styles from "./Home.module.css";
 import { ProviderPane } from "./ProviderPane";
 import { TonLogo } from "./TonLogo";

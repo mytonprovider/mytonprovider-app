@@ -18,7 +18,7 @@
     "eruda": "^3.4.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.6",
+    "react-router": "^7.18.5",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -34,9 +34,9 @@
     "terser": "^5.48.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.1",
-    "vite": "^6.4.3",
+    "vite": "^6.4.5",
     "vite-plugin-mkcert": "^1.17.12",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.5"
   }
 }

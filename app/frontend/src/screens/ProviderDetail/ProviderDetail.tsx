@@ -30,7 +30,7 @@ import { useCatalog } from "@/stores/catalog";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { type Field, FieldCard } from "./FieldCard";
 import { OwnerPanel } from "./OwnerPanel";
 import styles from "./ProviderDetail.module.css";

@@ -20,7 +20,7 @@ import { describeStatus, filterColor, reasonText, reasonTone, stateText, stateTo
 import { useCatalog } from "@/stores/catalog";
 import { bucketKey, useProviderBags } from "@/stores/providerBags";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import styles from "./ProviderBags.module.css";
 
 const TITLES: Record<BagFilter, DictStringKey> = {
