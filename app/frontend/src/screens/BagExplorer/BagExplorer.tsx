@@ -14,7 +14,7 @@ import type { Provider } from "@/data/types";
 import { useT } from "@/i18n";
 import type { Dict } from "@/i18n/types";
 import { ADDRESS_RE, RAW_RE, toUserFriendly } from "@/lib/address";
-import { SC } from "@/lib/colors";
+import { toneText } from "@/lib/colors";
 import { cx } from "@/lib/cx";
 import { EMPTY, ago, formatBytes, formatCount, formatPriceGram, formatTime, shorten } from "@/lib/format";
 import { bagGatewayUrl } from "@/lib/gateway";
@@ -82,7 +82,7 @@ function nextProofValue(
   const deadline = lastProof + maxSpan;
   if (deadline <= nowSec) {
     const late = ago(nowSec - deadline, t);
-    return notConfirmed ? <span style={{ color: SC.red }}>{late}</span> : late;
+    return notConfirmed ? <span style={{ color: toneText("red") }}>{late}</span> : late;
   }
   return t.inFuture(formatTime(deadline - nowSec, t, true));
 }
@@ -223,7 +223,7 @@ export function BagExplorer() {
                 className={styles.card}
                 onClick={() => navigate(`/bags?q=${encodeURIComponent(bag.contract_address)}`)}
               >
-                <div className={styles.title} style={{ color: SC[stateTone(bag.state)] }}>
+                <div className={styles.title} style={{ color: toneText(stateTone(bag.state)) }}>
                   {stateText(bag.state, t)}
                 </div>
                 <ContractRows bag={bag} compact />
@@ -236,7 +236,7 @@ export function BagExplorer() {
       {status === "ready" && single && (
         <>
           <Card className={styles.stateCard}>
-            <div className={styles.title} style={{ color: SC[stateTone(single.state)] }}>
+            <div className={styles.title} style={{ color: toneText(stateTone(single.state)) }}>
               {stateText(single.state, t)}
             </div>
           </Card>
@@ -252,7 +252,7 @@ export function BagExplorer() {
                 </>
               }
               label={t.bagProofs}
-              valueColor={SC[ratioTone(confirmed, single.providers.length)]}
+              valueColor={toneText(ratioTone(confirmed, single.providers.length))}
             />
             <MetricTile
               value={
@@ -269,7 +269,7 @@ export function BagExplorer() {
                 )
               }
               label={checkedAt === null ? t.bagChecks : `${t.bagChecks} · ${ago(nowSec - checkedAt, t)}`}
-              valueColor={checkedAt === null ? "var(--ts-hint)" : SC[ratioTone(passed, single.providers.length)]}
+              valueColor={checkedAt === null ? "var(--ts-hint)" : toneText(ratioTone(passed, single.providers.length))}
             />
           </div>
           <SectionHeader title={t.bagSection} />
@@ -315,12 +315,12 @@ export function BagExplorer() {
                 : () => navigate(`/provider/${prov.pubkey}`);
               return (
                 <div key={prov.pubkey} className={cx(styles.providerCard, open && styles.press)} onClick={open}>
-                  <div className={styles.title} style={{ color: SC[stateTone(prov.state)] }}>
+                  <div className={styles.title} style={{ color: toneText(stateTone(prov.state)) }}>
                     {stateText(prov.state, t)}
                   </div>
                   <div
                     className={styles.sub}
-                    style={prov.reason ? { color: SC[reasonTone(prov.reason)] } : undefined}
+                    style={prov.reason ? { color: toneText(reasonTone(prov.reason)) } : undefined}
                   >
                     {reasonText(prov.reason, t)}
                   </div>
@@ -335,7 +335,7 @@ export function BagExplorer() {
                     label={t.maxSpanF}
                     value={
                       <>
-                        <span style={off.span ? { color: SC.red } : undefined}>
+                        <span style={off.span ? { color: toneText("red") } : undefined}>
                           {prov.payment_max_span !== null ? formatTime(prov.payment_max_span, t) : EMPTY}
                         </span>
                         <span className={styles.slash}>/</span>
@@ -349,7 +349,7 @@ export function BagExplorer() {
                     label={t.bagRate}
                     value={
                       <>
-                        <span style={off.rate ? { color: SC.red } : undefined}>
+                        <span style={off.rate ? { color: toneText("red") } : undefined}>
                           {prov.rate_per_mb_day !== null ? formatCount(prov.rate_per_mb_day) : EMPTY}
                         </span>
                         <span className={styles.slash}>/</span>

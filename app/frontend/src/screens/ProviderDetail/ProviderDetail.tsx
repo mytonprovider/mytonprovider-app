@@ -21,7 +21,7 @@ import { useLogin } from "@/hooks/useLogin";
 import { useT } from "@/i18n";
 import type { Dict } from "@/i18n/types";
 import { toUserFriendly } from "@/lib/address";
-import { SC, rankColor, tint } from "@/lib/colors";
+import { rankColor, toneColor, toneText } from "@/lib/colors";
 import { cx } from "@/lib/cx";
 import { EMPTY, ago, amount, formatBytes, formatDiskSpeed, formatMbits, formatPing, formatPrice, formatPriceGram, formatSpacePair, formatTime, shorten, uptimeTone } from "@/lib/format";
 import { describeStatus } from "@/lib/status";
@@ -160,7 +160,7 @@ export function ProviderDetail() {
     setPwOpen(true);
   };
 
-  const header = <ProviderHeader pubkey={provider.pubkey} color={st.color} onBack={back} />;
+  const header = <ProviderHeader pubkey={provider.pubkey} color={toneColor(st.tone)} onBack={back} />;
 
   const overview = (
     <>
@@ -227,24 +227,24 @@ export function ProviderDetail() {
       >
         <TriggerBanners pubkey={pubkey} />
 
-        <div className={styles.statusCard}>
+        <div className={styles.statusCard} data-tone={st.tone}>
           {st.total > 0 && (
             <div className={styles.health}>
-              <div style={{ flexGrow: Math.max(st.ratio, 0.0001), background: st.color }} />
+              <div style={{ flexGrow: Math.max(st.ratio, 0.0001), background: "var(--tone)" }} />
               <div style={{ flexGrow: Math.max(1 - st.ratio, 0), background: "var(--ts-sepf)" }} />
             </div>
           )}
           <div className={styles.statusBody}>
             <div className={styles.statusTop}>
-              <div className={styles.statusLabelWrap} style={{ color: st.color }}>
-                <StatusDot color={st.color} size={9} />
+              <div className={styles.statusLabelWrap}>
+                <StatusDot color="var(--tone)" size={9} />
                 <span>{st.label}</span>
                 {st.hasRatio && <span className={styles.statusRatio}>{amount(st.ratio * 100)}%</span>}
               </div>
               {st.total > 0 && (
                 <div className={styles.checks}>
                   <span className={styles.checksLabel}>{t.filesAvail}</span>
-                  <span className={styles.passedBadge} style={{ background: tint(SC.green, 0.18), color: SC.green }}>
+                  <span className={styles.passedBadge} data-tone="green">
                     {st.passed}
                   </span>
                   <span className={styles.slash}>/</span>
@@ -265,7 +265,7 @@ export function ProviderDetail() {
               <span className={styles.statusDesc}>{st.desc}</span>
               {checksOpen && (
                 <>
-                  <span className={styles.bagsBadge} style={{ background: tint(SC.red, 0.16), color: SC.red }}>
+                  <span className={styles.bagsBadge} data-tone="red">
                     {st.problems}
                   </span>
                   <Icon glyph="chevron" size={16} color="var(--ts-hint)" />
@@ -289,7 +289,7 @@ export function ProviderDetail() {
             }
             valueColor="var(--ts-accent)"
           />
-          <MetricTile value={amount(provider.uptime)} unit="%" label={t.uptime} valueColor={SC[uptimeTone(provider.uptime)]} />
+          <MetricTile value={amount(provider.uptime)} unit="%" label={t.uptime} valueColor={toneText(uptimeTone(provider.uptime))} />
           <MetricTile value={formatPrice(provider.price)} unit="GRAM" label={t.priceUnit} />
         </div>
 

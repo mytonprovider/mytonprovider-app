@@ -11,12 +11,12 @@ import { useRowWindow } from "@/hooks/useRowWindow";
 import { useT } from "@/i18n";
 import type { DictStringKey } from "@/i18n/types";
 import { toUserFriendly } from "@/lib/address";
-import { SC } from "@/lib/colors";
+import { toneColor, toneText } from "@/lib/colors";
 import { EMPTY, ago, formatBytes, shorten } from "@/lib/format";
 import { bagGatewayUrl } from "@/lib/gateway";
 import { onRevalidate } from "@/lib/revalidate";
 import { COLD_CARDS } from "@/lib/skeletons";
-import { describeStatus, filterColor, reasonText, reasonTone, stateText, stateTone } from "@/lib/status";
+import { describeStatus, filterTone, reasonText, reasonTone, stateText, stateTone } from "@/lib/status";
 import { useCatalog } from "@/stores/catalog";
 import { bucketKey, useProviderBags } from "@/stores/providerBags";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
@@ -85,15 +85,15 @@ export function ProviderBags() {
   };
 
   const view = provider ? describeStatus(provider, t) : null;
-  const color = view?.color ?? SC.gray;
+  const tone = view?.tone ?? "gray";
   const nowSec = Math.floor(Date.now() / 1000);
-  const header = <ProviderHeader pubkey={pubkey} color={color} onBack={() => navigate(-1)} />;
+  const header = <ProviderHeader pubkey={pubkey} color={toneColor(tone)} onBack={() => navigate(-1)} />;
 
   return (
     <Screen header={header}>
       <div className={styles.about}>
         <div className={styles.aboutHead}>
-          <StatusDot color={filterColor(state)} size={8} />
+          <StatusDot color={toneColor(filterTone(state))} size={8} />
           {t[TITLES[state]]}
         </div>
         <div className={styles.aboutText}>{t.bagsAbout[state]}</div>
@@ -129,10 +129,10 @@ export function ProviderBags() {
           <div ref={listRef} className={styles.list} style={{ paddingTop: padTop, paddingBottom: padBottom }}>
             {found.slice(start, end).map((bag) => (
               <div key={bag.address} className={styles.card} onClick={openBag(bag)}>
-                <div className={styles.title} style={{ color: SC[stateTone(bag.state)] }}>
+                <div className={styles.title} style={{ color: toneText(stateTone(bag.state)) }}>
                   {stateText(bag.state, t)}
                 </div>
-                <div className={styles.sub} style={bag.reason ? { color: SC[reasonTone(bag.reason)] } : undefined}>
+                <div className={styles.sub} style={bag.reason ? { color: toneText(reasonTone(bag.reason)) } : undefined}>
                   {reasonText(bag.reason, t)}
                 </div>
                 {bag.bag_id && (

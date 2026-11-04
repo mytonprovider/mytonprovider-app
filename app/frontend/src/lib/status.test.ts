@@ -3,8 +3,8 @@ import { providerWith, silent, stable } from "@/data/fixtures";
 import { en } from "@/i18n/en";
 import { ru } from "@/i18n/ru";
 import { describe, expect, it } from "vitest";
-import { ACCENT, SC, type StatusTone } from "./colors";
-import { describeStatus, filterColor, reasonText, reasonTone, stateText, stateTone, statusTone } from "./status";
+import type { StatusTone } from "./colors";
+import { describeStatus, filterTone, reasonText, reasonTone, stateText, stateTone, statusTone } from "./status";
 
 // Typed by BagState: a state added on the backend stops the build here.
 const STATE_TONES: Record<BagState, StatusTone> = {
@@ -28,10 +28,10 @@ describe("bag states", () => {
     }
   });
 
-  it("colours the slices that are not states apart", () => {
-    expect(filterColor("all")).toBe(ACCENT);
-    expect(filterColor("check")).toBe(SC.gray);
-    expect(filterColor("confirmed")).toBe(SC.green);
+  it("tones the slices that are not states apart", () => {
+    expect(filterTone("all")).toBe("accent");
+    expect(filterTone("check")).toBe("gray");
+    expect(filterTone("confirmed")).toBe("green");
   });
 });
 

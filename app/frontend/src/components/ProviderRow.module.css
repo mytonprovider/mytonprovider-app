@@ -38,6 +38,7 @@
   white-space: nowrap;
 }
 
+/* The tone's text is quiet on its own fill, so the label needs no bold. */
 .status {
   display: inline-flex;
   align-items: center;
@@ -48,8 +49,11 @@
   overflow: hidden;
   padding: 2px 7px;
   border-radius: var(--ts-radius-seg);
+  background: var(--tone-weak);
+  box-shadow: inset 0 0 0 1px var(--tone-ring);
+  color: var(--tone-text);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 

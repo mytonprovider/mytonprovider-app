@@ -4,7 +4,6 @@ import { ownerTriggers } from "@/data/owner";
 import { useOwnerData } from "@/hooks/useOwnerData";
 import { useT } from "@/i18n";
 import type { TriggerKey } from "@/i18n/types";
-import { SC, tint } from "@/lib/colors";
 import { useAuth } from "@/stores/auth";
 import { useSubscriptions } from "@/stores/subscriptions";
 import styles from "./ProviderDetail.module.css";
@@ -28,17 +27,12 @@ export function TriggerBanners({ pubkey }: { pubkey: string }) {
 
   return (
     <>
-      {triggers.map((trigger) => {
-        const color = trigger.color === "red" ? SC.red : SC.orange;
-        return (
-          <div key={trigger.key} className={styles.triggerBanner} style={{ background: tint(color, 0.12) }}>
-            <Icon glyph={TRIGGER_GLYPH[trigger.key]} size={16} color={color} />
-            <span className={styles.bannerText} style={{ color }}>
-              {t.triggerNames[trigger.key]}
-            </span>
-          </div>
-        );
-      })}
+      {triggers.map((trigger) => (
+        <div key={trigger.key} className={styles.triggerBanner} data-tone={trigger.color}>
+          <Icon glyph={TRIGGER_GLYPH[trigger.key]} size={16} color="var(--tone-text)" />
+          <span className={styles.bannerText}>{t.triggerNames[trigger.key]}</span>
+        </div>
+      ))}
     </>
   );
 }

@@ -68,8 +68,11 @@
 .bagsBadge {
   padding: 1px 7px;
   border-radius: 7px;
+  background: var(--tone-weak);
+  box-shadow: inset 0 0 0 1px var(--tone-ring);
+  color: var(--tone-text);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -95,6 +98,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  color: var(--tone-text);
   font-size: 16px;
   font-weight: 700;
 }
@@ -121,8 +125,11 @@
 .passedBadge {
   padding: 2px 7px;
   border-radius: 6px;
+  background: var(--tone-weak);
+  box-shadow: inset 0 0 0 1px var(--tone-ring);
+  color: var(--tone-text);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .slash {
@@ -446,6 +453,9 @@
 .triggerBanner {
   composes: banner;
   overflow: hidden;
+  background: var(--tone-weak);
+  box-shadow: inset 0 0 0 1px var(--tone-ring);
+  color: var(--tone-text);
   animation: ts-banner-in 0.28s ease;
 }
 

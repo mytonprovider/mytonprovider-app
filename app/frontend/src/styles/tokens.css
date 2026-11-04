@@ -39,6 +39,31 @@
   --ts-thumb: #6c6c72;
   --ts-backdrop: #000000;
   --ts-card-shadow: 0 0 55px rgba(200, 205, 215, 0.2);
+
+  --ts-tone-gray: #6e727b;
+  --ts-tone-gray-weak: #232327;
+  --ts-tone-gray-text: #9ca3af;
+  --ts-tone-gray-ring: #404247;
+  --ts-tone-green: #469364;
+  --ts-tone-green-weak: #1e2724;
+  --ts-tone-green-text: #5ed58b;
+  --ts-tone-green-ring: #2d513d;
+  --ts-tone-yellow: #95803a;
+  --ts-tone-yellow-weak: #27251f;
+  --ts-tone-yellow-text: #d9b84a;
+  --ts-tone-yellow-ring: #524829;
+  --ts-tone-orange: #96663a;
+  --ts-tone-orange-weak: #2a211b;
+  --ts-tone-orange-text: #f0a868;
+  --ts-tone-orange-ring: #5a3f2a;
+  --ts-tone-red: #a05a5c;
+  --ts-tone-red-weak: #292023;
+  --ts-tone-red-text: #ea7e7f;
+  --ts-tone-red-ring: #573739;
+  --ts-tone-accent: #5cc4f7;
+  --ts-tone-accent-weak: #1d2f38;
+  --ts-tone-accent-text: #5cc4f7;
+  --ts-tone-accent-ring: #315d74;
 }
 
 [data-theme="light"] {
@@ -55,4 +80,72 @@
   --ts-thumb: #ffffff;
   --ts-backdrop: #e3e3e9;
   --ts-card-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+
+  --ts-tone-gray: #9399a1;
+  --ts-tone-gray-weak: #f6f6f7;
+  --ts-tone-gray-text: #4b5563;
+  --ts-tone-gray-ring: #d0d3d6;
+  --ts-tone-green: #73b38b;
+  --ts-tone-green-weak: #f3f9f5;
+  --ts-tone-green-text: #15803d;
+  --ts-tone-green-ring: #c2decd;
+  --ts-tone-yellow: #b9a766;
+  --ts-tone-yellow-weak: #f9f8f2;
+  --ts-tone-yellow-text: #8a6d00;
+  --ts-tone-yellow-ring: #e1d9bd;
+  --ts-tone-orange: #d2955f;
+  --ts-tone-orange-weak: #fdf7f1;
+  --ts-tone-orange-text: #b45309;
+  --ts-tone-orange-ring: #ebd3bb;
+  --ts-tone-red: #d57777;
+  --ts-tone-red-weak: #fcf4f4;
+  --ts-tone-red-text: #b91c1c;
+  --ts-tone-red-ring: #edc4c4;
+  --ts-tone-accent: #0098ea;
+  --ts-tone-accent-weak: #e6f5fe;
+  --ts-tone-accent-text: #006ca7;
+  --ts-tone-accent-ring: #4eb7f1;
+}
+
+/* A state declares a tone, not a colour, as on the sites; orange is ours, they have none. */
+[data-tone="gray"] {
+  --tone: var(--ts-tone-gray);
+  --tone-weak: var(--ts-tone-gray-weak);
+  --tone-text: var(--ts-tone-gray-text);
+  --tone-ring: var(--ts-tone-gray-ring);
+}
+
+[data-tone="green"] {
+  --tone: var(--ts-tone-green);
+  --tone-weak: var(--ts-tone-green-weak);
+  --tone-text: var(--ts-tone-green-text);
+  --tone-ring: var(--ts-tone-green-ring);
+}
+
+[data-tone="yellow"] {
+  --tone: var(--ts-tone-yellow);
+  --tone-weak: var(--ts-tone-yellow-weak);
+  --tone-text: var(--ts-tone-yellow-text);
+  --tone-ring: var(--ts-tone-yellow-ring);
+}
+
+[data-tone="orange"] {
+  --tone: var(--ts-tone-orange);
+  --tone-weak: var(--ts-tone-orange-weak);
+  --tone-text: var(--ts-tone-orange-text);
+  --tone-ring: var(--ts-tone-orange-ring);
+}
+
+[data-tone="red"] {
+  --tone: var(--ts-tone-red);
+  --tone-weak: var(--ts-tone-red-weak);
+  --tone-text: var(--ts-tone-red-text);
+  --tone-ring: var(--ts-tone-red-ring);
+}
+
+[data-tone="accent"] {
+  --tone: var(--ts-tone-accent);
+  --tone-weak: var(--ts-tone-accent-weak);
+  --tone-text: var(--ts-tone-accent-text);
+  --tone-ring: var(--ts-tone-accent-ring);
 }

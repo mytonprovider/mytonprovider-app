@@ -1,7 +1,7 @@
 import type { BagFilter, BagState } from "@/data/backend";
 import type { Provider } from "@/data/types";
 import type { Dict } from "@/i18n/types";
-import { ACCENT, SC, type StatusTone } from "./colors";
+import type { StatusTone } from "./colors";
 
 // Upstream check codes grouped by what they mean, tone following the weight; grey means
 // only that the check never ran. 301 also fires on version skew between checker and node.
@@ -60,9 +60,9 @@ export function stateText(state: BagState, t: Dict): string {
 }
 
 // Slices are not states: "check" is grey because it mixes every chain state there is.
-export function filterColor(filter: BagFilter): string {
-  if (filter === "all") return ACCENT;
-  return filter === "check" ? SC.gray : SC[stateTone(filter)];
+export function filterTone(filter: BagFilter): StatusTone | "accent" {
+  if (filter === "all") return "accent";
+  return filter === "check" ? "gray" : stateTone(filter);
 }
 
 function ratioTone(ratio: number): StatusTone {
@@ -110,7 +110,6 @@ function resolveStatus(p: Provider): ResolvedStatus {
 
 interface StatusView {
   tone: StatusTone;
-  color: string;
   label: string;
   desc: string;
   ratio: number;
@@ -125,7 +124,6 @@ export function describeStatus(p: Provider, t: Dict): StatusView {
   const desc = s.problems > 0 ? t.bagsFailed : s.total === 0 ? t.reason.none : reasonText(s.dominantReason, t);
   return {
     tone: s.tone,
-    color: SC[s.tone],
     label: t.status[s.labelKey],
     desc,
     ratio: s.ratio,
