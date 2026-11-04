@@ -8,6 +8,10 @@
   --ts-font: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --ts-font-mono: Menlo, "SF Mono", ui-monospace, monospace;
 
+  /* Wider and the card row stops reading as one line; backdrops still span the window. */
+  --ts-content-max: 720px;
+  --ts-sheet-max: 560px;
+
   --ts-status-w: 148px;
   /* The round toggle of a provider row; its loading shape is a circle of the same size. */
   --ts-toggle: 30px;

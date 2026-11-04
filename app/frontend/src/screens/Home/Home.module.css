@@ -10,11 +10,11 @@
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px 10px;
+  padding-block: 8px 10px;
+  padding-inline: max(10px, calc((100% - var(--ts-content-max)) / 2));
   background: var(--ts-navbg);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  border-bottom: var(--ts-hairline) solid var(--ts-sep);
 }
 
 .navActions {

@@ -1,5 +1,6 @@
 .bar {
   flex: none;
-  padding: 12px 16px calc(14px + var(--ts-safe-bottom));
+  padding-block: 12px calc(14px + var(--ts-safe-bottom));
+  padding-inline: max(16px, calc((100% - var(--ts-content-max)) / 2));
   background: var(--ts-bg);
 }
