@@ -140,7 +140,7 @@
   padding: 2px 7px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   background: var(--ts-card2);
   color: var(--ts-hint);
 }
