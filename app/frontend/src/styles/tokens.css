@@ -31,6 +31,7 @@
 
 [data-theme="dark"] {
   --ts-bg: #0e0e11;
+  --ts-sheet: #17171b;
   --ts-card: #1c1c20;
   --ts-card2: #2a2a2f;
   --ts-text: #f0f0f3;
@@ -72,6 +73,7 @@
 
 [data-theme="light"] {
   --ts-bg: #efeff4;
+  --ts-sheet: #f7f7fa;
   --ts-card: #ffffff;
   --ts-card2: #f2f2f7;
   --ts-text: #000000;
