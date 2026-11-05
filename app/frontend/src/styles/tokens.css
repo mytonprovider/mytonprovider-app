@@ -8,7 +8,7 @@
   --ts-font: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --ts-font-mono: Menlo, "SF Mono", ui-monospace, monospace;
 
-  /* Wider and the card row stops reading as one line; backdrops still span the window. */
+  /* Wider and the card row stops reading as one line; the sheet scrim still spans the window. */
   --ts-content-max: 720px;
   --ts-sheet-max: 560px;
   --ts-column: calc((100% - var(--ts-content-max)) / 2);
@@ -44,7 +44,6 @@
   --ts-navbg: rgba(14, 14, 17, 0.94);
   --ts-seg: rgba(118, 118, 128, 0.24);
   --ts-thumb: #6c6c72;
-  --ts-backdrop: #000000;
   --ts-card-shadow: 0 0 55px rgba(200, 205, 215, 0.2);
 
   --ts-tone-gray: #6e727b;
@@ -86,7 +85,6 @@
   --ts-navbg: rgba(239, 239, 244, 0.94);
   --ts-seg: rgba(118, 118, 128, 0.14);
   --ts-thumb: #ffffff;
-  --ts-backdrop: #e3e3e9;
   --ts-card-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 
   --ts-tone-gray: #9399a1;

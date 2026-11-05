@@ -98,7 +98,7 @@
 
 .fab {
   position: absolute;
-  right: 16px;
+  right: max(16px, calc(var(--ts-column) + 16px));
   bottom: calc(86px + var(--ts-safe-bottom));
   width: 44px;
   height: 44px;
