@@ -11,6 +11,7 @@
   /* Wider and the card row stops reading as one line; backdrops still span the window. */
   --ts-content-max: 720px;
   --ts-sheet-max: 560px;
+  --ts-column: calc((100% - var(--ts-content-max)) / 2);
 
   --ts-status-w: 148px;
   /* The round toggle of a provider row; its loading shape is a circle of the same size. */
@@ -20,6 +21,7 @@
   --ts-radius-group: 10px;
   --ts-radius-field: 11px;
   --ts-radius-seg: 9px;
+  --ts-radius-pill: 7px;
   --ts-hairline: 0.5px;
 
   --ts-safe-bottom: env(safe-area-inset-bottom, 0px);

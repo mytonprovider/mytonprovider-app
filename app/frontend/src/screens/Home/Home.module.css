@@ -11,7 +11,7 @@
   align-items: center;
   gap: 8px;
   padding-block: 8px 10px;
-  padding-inline: max(10px, calc((100% - var(--ts-content-max)) / 2));
+  padding-inline: max(10px, var(--ts-column));
   background: var(--ts-navbg);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);

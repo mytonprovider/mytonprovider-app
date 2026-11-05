@@ -10,7 +10,7 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
   padding-bottom: 48px;
-  padding-inline: max(16px, calc((100% - var(--ts-content-max)) / 2));
+  padding-inline: max(16px, var(--ts-column));
   scrollbar-width: none;
 }
 
