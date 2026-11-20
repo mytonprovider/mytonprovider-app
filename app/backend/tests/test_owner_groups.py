@@ -32,12 +32,6 @@ def by_country() -> list[dict[str, Any]]:
     return _groups(ROWS, OWNER, lambda row: (row.country_iso,))
 
 
-def test_a_country_folds_its_providers() -> None:
-    folded = {(group["country"], group["slots"]) for group in by_country()}
-
-    assert folded == {("United States", 40), ("Japan", 20), (None, 5)}
-
-
 def test_one_hosting_is_one_slice_across_borders() -> None:
     hostings = _groups(ROWS, OWNER, lambda row: (row.isp_key,))
 

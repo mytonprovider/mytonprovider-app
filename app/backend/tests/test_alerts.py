@@ -51,14 +51,11 @@ def test_offline_and_silent_are_two_signals_over_two_columns() -> None:
     assert TelemetryLost().triggered(offline, DEFAULT_THRESHOLDS) is False
 
 
-def test_evaluate_fires_one_alert_per_metric() -> None:
-    assert evaluate(provider(cpu_load_percent=1.0), {}) == []
-    assert [rule.type for rule in evaluate(provider(cpu_load_percent=LIMIT), {})] == [AlertType.CPU_HIGH]
-
-
-def test_owner_threshold_wins_over_the_default() -> None:
+def test_evaluate_fires_one_alert_per_metric_and_the_owner_threshold_wins() -> None:
     quiet = provider(cpu_load_percent=1.0)
 
+    assert evaluate(quiet, {}) == []
+    assert [rule.type for rule in evaluate(provider(cpu_load_percent=LIMIT), {})] == [AlertType.CPU_HIGH]
     assert [rule.type for rule in evaluate(quiet, {CPU: 1})] == [AlertType.CPU_HIGH]
 
 
