@@ -1,0 +1,16 @@
+/* A package row is one line of its text, the copy button tucked into it, with the padding a divided list gives it.
+   The bars size against the whole row: inside the package's own label and value they would shrink to nothing. */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: content-box;
+  height: calc(var(--font-base) * var(--line-base));
+  padding-block: var(--space-3);
+}
+
+.bar {
+  display: inline-block;
+  vertical-align: middle;
+  height: var(--ts-shape-line);
+}

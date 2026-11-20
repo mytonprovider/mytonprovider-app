@@ -1,5 +1,6 @@
 import { getInitDataRaw, isInTelegram } from "@/lib/telegram";
-import type { Explorer, Theme } from "@/stores/settings";
+import type { Explorer } from "@myton/ui/domain";
+import type { Theme } from "@/stores/settings";
 
 const BACKEND_BASE = import.meta.env.VITE_BACKEND_BASE ?? "";
 const TIMEOUT_MS = 15000;
@@ -151,7 +152,7 @@ export interface OwnerPayload extends ProviderPayload {
   chart: OwnerChartPoint[];
 }
 
-export type SlotState =
+type SlotState =
   | "confirmed"
   | "closed"
   | "not_paid"
@@ -167,7 +168,7 @@ export type BagState = SlotState | "partial" | "not_hired";
 // Screen slices, not states: "all" and "check" only narrow the list.
 export type BagFilter = SlotState | "all" | "check";
 
-export interface BagCounters {
+interface BagCounters {
   all: number;
   confirmed: number;
   closed: number;

@@ -3,7 +3,7 @@ import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { type Location, Routes, useLocation, useNavigate } from "react-router";
 import { type DialogSlot, LayerContext, setDialogsOpen } from "./context";
 import styles from "./LayerStack.module.css";
-import { isBaseRoute, sheetHeight } from "./presentation";
+import { sheetHeight } from "./presentation";
 import { Sheet } from "./Sheet";
 
 interface Entry {
@@ -13,17 +13,23 @@ interface Entry {
   closing: boolean;
 }
 
-function historyIndex(): number {
-  return (window.history.state as { idx?: number } | null)?.idx ?? 0;
+// A layer's own key, not the location's: react-router keys every location without history state "default" (an
+// address typed past the app), and two layers sharing it closed together, the base screen with them.
+let lastKey = 0;
+const nextKey = () => String(++lastKey);
+
+// null for an address typed past the app: the router never numbered that history entry.
+function historyIndex(): number | null {
+  return (window.history.state as { idx?: number } | null)?.idx ?? null;
 }
 
 function entryOf(location: Location): Entry {
-  return { key: location.key, location, idx: historyIndex(), closing: false };
+  return { key: nextKey(), location, idx: historyIndex() ?? 0, closing: false };
 }
 
 function initialEntries(location: Location): Entry[] {
   const entry = entryOf(location);
-  if (isBaseRoute(location.pathname)) return [entry];
+  if (location.pathname === "/") return [entry];
   const base = { ...location, key: "base", pathname: "/", search: "", hash: "" };
   return [{ key: base.key, location: base, idx: entry.idx - 1, closing: false }, entry];
 }
@@ -41,18 +47,23 @@ export function LayerStack({ children }: { children: ReactNode }) {
     setEntries((prev) => {
       const idx = historyIndex();
       const base = prev[0];
-      if (isBaseRoute(location.pathname)) {
-        const nextBase = { ...base, key: location.key, location, idx };
+      if (location.pathname === "/") {
+        const nextBase = { ...base, location, idx: idx ?? 0 };
         return [nextBase, ...prev.slice(1).map((entry) => ({ ...entry, closing: true }))];
       }
       const live = prev.filter((entry) => !entry.closing);
       const top = live[live.length - 1];
+      // A cold start at a sheet: the first render already built this layer, and a new key would mount it twice.
+      if (top && top.location === location) return prev;
       const onBase = !top || top === prev[0];
-      if (onBase || idx > top.idx) return [...prev, { key: location.key, location, idx, closing: false }];
+      // Unnumbered would read as 0, under the open sheet, and close it without opening the address; it goes on top
+      // instead.
+      if (idx === null) return [...prev, { key: nextKey(), location, idx: (top?.idx ?? 0) + 1, closing: false }];
+      if (onBase || idx > top.idx) return [...prev, { key: nextKey(), location, idx, closing: false }];
       if (idx < top.idx) {
         return prev.map((entry) => (entry.idx > idx ? { ...entry, closing: true } : entry));
       }
-      return prev.map((entry) => (entry.key === top.key ? { key: location.key, location, idx, closing: false } : entry));
+      return prev.map((entry) => (entry.key === top.key ? { key: nextKey(), location, idx, closing: false } : entry));
     });
   }, [location]);
 

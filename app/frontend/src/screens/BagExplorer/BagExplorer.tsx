@@ -1,30 +1,52 @@
-import { Card } from "@/components/Card";
+import {
+  buttonClass,
+  Card,
+  EmptyState,
+  FieldGroup,
+  FieldList,
+  FieldRow,
+  GhostValue,
+  LoadError,
+  OpenRow,
+  ShortId,
+  skeletonClass,
+} from "@myton/ui";
+import {
+  EMPTY,
+  fmt,
+  parseAddress,
+  ratioState,
+  reasonTone,
+  shortKey,
+  STATE_TONE,
+  toFriendly,
+  type StatusTone,
+} from "@myton/ui/domain";
+import { locales, type TimeWords } from "@myton/ui/locale";
+import { BagCardSkeleton } from "@/components/BagCardSkeleton";
 import { CopyRow } from "@/components/CopyRow";
-import { Callout } from "@/components/Callout";
-import { Field } from "@/components/Field";
 import { ExplorerAddressRow } from "@/components/ExplorerAddressRow";
-import { FieldRow } from "@/components/FieldRow";
-import { Icon } from "@/components/Icon/Icon";
+import { Field } from "@/components/Field";
 import { MetricTile } from "@/components/MetricTile";
+import { PlaceholderRow, type PlaceholderWidths } from "@/components/PlaceholderRow";
 import { Screen } from "@/components/Screen";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { SectionHeader } from "@/components/SectionHeader";
 import { BackendError, backend, type BagPayload, type BagProvider } from "@/data/backend";
 import type { Provider } from "@/data/types";
-import { useT } from "@/i18n";
-import type { Dict } from "@/i18n/types";
-import { ADDRESS_RE, RAW_RE, toUserFriendly } from "@/lib/address";
+import { useAppliedLang, useTimeWords } from "@/i18n";
 import { toneText } from "@/lib/colors";
-import { cx } from "@/lib/cx";
-import { EMPTY, ago, formatBytes, formatCount, formatPriceGram, formatTime, shorten } from "@/lib/format";
 import { bagGatewayUrl } from "@/lib/gateway";
-import { reasonText, reasonTone, stateText, stateTone } from "@/lib/status";
+import { reasonText, stateText, stateTone } from "@/lib/status";
 import { useCatalog } from "@/stores/catalog";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
+import type { TFunction } from "i18next";
+import { Info, Search, TriangleAlert, X } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import styles from "./BagExplorer.module.css";
+import list from "@/styles/list.module.css";
 
 const REPORT_BOT = "https://t.me/bagidreport_bot";
 // Catalogue quotes per 200 GB per month, the contract per MB per day - same divisor as the backend.
@@ -35,7 +57,7 @@ type QueryKind = "bag" | "address";
 
 function classify(query: string): QueryKind | null {
   if (BAG_ID_RE.test(query)) return "bag";
-  if (RAW_RE.test(query) || ADDRESS_RE.test(query)) return "address";
+  if (parseAddress(query)) return "address";
   return null;
 }
 
@@ -58,15 +80,18 @@ function mismatch(prov: BagProvider, listed: Provider | undefined): { span: bool
   return {
     span:
       prov.payment_max_span !== null &&
+      listed.minSpan !== null &&
+      listed.maxSpan !== null &&
       (prov.payment_max_span < listed.minSpan || prov.payment_max_span > listed.maxSpan),
-    rate: prov.rate_per_mb_day !== null && prov.rate_per_mb_day < Math.round(listed.price / PRICE_MB_DAYS),
+    rate:
+      prov.rate_per_mb_day !== null &&
+      listed.price !== null &&
+      prov.rate_per_mb_day < Math.round(listed.price / PRICE_MB_DAYS),
   };
 }
 
-// Same thresholds the provider card uses for its own ratio.
-function ratioTone(passed: number, total: number): "green" | "yellow" | "red" {
-  const ratio = total > 0 ? passed / total : 0;
-  return ratio >= 0.99 ? "green" : ratio >= 0.8 ? "yellow" : "red";
+function ratioTone(passed: number, total: number): StatusTone {
+  return STATE_TONE[ratioState(total > 0 ? passed / total : 0) ?? "unstable"];
 }
 
 // The window closing is not the alarm - the ladder gives proofs OVERDUE_FACTOR of slack
@@ -75,34 +100,30 @@ function nextProofValue(
   lastProof: number | null,
   maxSpan: number | null,
   nowSec: number,
-  t: Dict,
+  t: TFunction,
+  time: TimeWords,
   notConfirmed: boolean,
 ): ReactNode {
   if (!lastProof || !maxSpan) return EMPTY;
   const deadline = lastProof + maxSpan;
   if (deadline <= nowSec) {
-    const late = ago(nowSec - deadline, t);
+    const late = fmt.ago(nowSec, deadline, time.ago);
     return notConfirmed ? <span style={{ color: toneText("red") }}>{late}</span> : late;
   }
-  return t.inFuture(formatTime(deadline - nowSec, t, true));
+  return t("inFuture", { time: fmt.duration(deadline - nowSec, time.duration) });
 }
 
 // The same three rows in both places: the contract section of an open bag, and the card
 // that picks one when the hash matched several.
-function ContractRows({ bag, compact }: { bag: BagPayload; compact?: boolean }) {
-  const t = useT();
+function ContractRows({ bag }: { bag: BagPayload }) {
+  const { t } = useTranslation();
   return (
     <>
-      <ExplorerAddressRow label={t.bagAddress} address={bag.contract_address} divider={compact} compact={compact} />
+      <ExplorerAddressRow label={t("bagAddress")} address={bag.contract_address} />
       {bag.owner_address && (
-        <ExplorerAddressRow label={t.bagOwner} address={toUserFriendly(bag.owner_address)} divider compact={compact} />
+        <ExplorerAddressRow label={t("bagOwner")} address={toFriendly(bag.owner_address) ?? bag.owner_address} />
       )}
-      <FieldRow
-        divider
-        compact={compact}
-        label={t.balanceLabel}
-        value={bag.balance != null ? formatPriceGram(bag.balance) : EMPTY}
-      />
+      <FieldRow label={t("balanceLabel")} value={bag.balance != null ? fmt.tonLabel(bag.balance) : EMPTY} />
     </>
   );
 }
@@ -110,7 +131,9 @@ function ContractRows({ bag, compact }: { bag: BagPayload; compact?: boolean }) 
 type Status = "idle" | "loading" | "ready" | "notfound" | "invalid" | "failed";
 
 export function BagExplorer() {
-  const t = useT();
+  const { t } = useTranslation();
+  const time = useTimeWords();
+  const locale = locales[useAppliedLang()];
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const providers = useCatalog((s) => s.providers);
@@ -159,15 +182,18 @@ export function BagExplorer() {
     }
   }, [params, runSearch]);
 
-  const header = <ScreenHeader title={t.explorerTitle} onBack={() => navigate(-1)} />;
+  const header = <ScreenHeader title={t("explorerTitle")} onBack={() => navigate(-1)} />;
   const nowSec = Math.floor(Date.now() / 1000);
-  // One contract is the screen as it always was; several turn the same query into a pick.
+  // Several contracts behind one query turn the screen into a pick.
   const single = results.length === 1 ? results[0] : null;
   const slots = single?.providers ?? [];
   const confirmed = slots.filter((p) => p.state === "confirmed").length;
   const passed = slots.filter((p) => p.reason === 0).length;
   // Upstream checks the whole network in one batch, so the age is one per bag, not per slot.
-  const checkedAt = slots.reduce<number | null>((max, p) => (p.reason_at ?? 0) > (max ?? 0) ? p.reason_at : max, null);
+  const checkedAt = slots.reduce<number | null>(
+    (max, p) => ((p.reason_at ?? 0) > (max ?? 0) ? p.reason_at : max),
+    null,
+  );
 
   return (
     <Screen header={header}>
@@ -179,63 +205,54 @@ export function BagExplorer() {
           setQuery(next);
           if (status === "invalid") setStatus("idle");
         }}
-        placeholder={t.bagSearchPlaceholder}
+        placeholder={t("bagSearchPlaceholder")}
         enterKeyHint="search"
         invalid={status === "invalid"}
         onEnter={() => runSearch(query)}
-        trailing={
-          query && (
-            <button
-              type="button"
-              aria-label="Clear"
-              className={styles.searchClear}
-              onClick={() => {
-                setQuery("");
-                setStatus("idle");
-                setResults([]);
-              }}
-            >
-              <Icon glyph="close" size={16} color="var(--ts-hint)" stroke={2} />
-            </button>
-          )
-        }
+        onClear={() => {
+          setStatus("idle");
+          setResults([]);
+        }}
       />
 
-      {status === "idle" && <Callout glyph="search" title={t.bagIdleTitle} desc={t.bagIdleDesc} />}
-      {status === "loading" && <BagSkeleton t={t} />}
+      {status === "idle" && <EmptyState size="lg" icon={Search} title={t("bagIdleTitle")} hint={t("bagIdleDesc")} />}
+      {status === "loading" && <BagSkeleton />}
       {status === "invalid" && (
-        <Callout glyph="info" title={t.bagInvalidTitle} desc={t.bagInvalidDesc} iconColor="var(--ts-hint)" />
+        <EmptyState size="lg" icon={Info} muted title={t("bagInvalidTitle")} hint={t("bagInvalidDesc")} />
       )}
       {status === "notfound" && (
-        <Callout glyph="close" title={t.bagNotFoundTitle} desc={t.bagNotFoundDesc} iconColor="var(--ts-hint)" />
+        <EmptyState size="lg" icon={X} muted title={t("bagNotFoundTitle")} hint={t("bagNotFoundDesc")} />
       )}
-      {status === "failed" && <Callout glyph="close" title={t.bagsLoadError} iconColor="var(--ts-hint)" />}
+      {status === "failed" && <LoadError size="lg" message={t("bagsLoadError")} onRetry={() => runSearch(query)} />}
 
       {status === "ready" && results.length > 1 && (
         <>
           <div className={styles.count}>
-            {t.bagFound} · {results.length}
+            {t("bagFound")} · {results.length}
           </div>
-          <div className={styles.list}>
-            {results.map((bag) => (
-              <div
+          <Card striped className={styles.list}>
+            {results.map((bag, index) => (
+              <OpenRow
                 key={bag.contract_address}
-                className={styles.card}
-                onClick={() => navigate(`/bags?q=${encodeURIComponent(bag.contract_address)}`)}
+                onOpen={() => navigate(`/bags?q=${encodeURIComponent(bag.contract_address)}`)}
+                label={`${t("bagDetails")} ${shortKey(bag.contract_address)}`}
+                data-alt={index % 2 === 1 || undefined}
               >
                 <div className={styles.title} style={{ color: toneText(stateTone(bag.state)) }}>
                   {stateText(bag.state, t)}
                 </div>
-                <ContractRows bag={bag} compact />
-              </div>
+                <FieldList divided className={styles.rows}>
+                  <ContractRows bag={bag} />
+                </FieldList>
+              </OpenRow>
             ))}
-          </div>
+          </Card>
         </>
       )}
 
       {status === "ready" && single && (
         <>
-          <Card className={styles.stateCard}>
+          <Card frame className={styles.stateCard}>
             <div className={styles.title} style={{ color: toneText(stateTone(single.state)) }}>
               {stateText(single.state, t)}
             </div>
@@ -251,7 +268,7 @@ export function BagExplorer() {
                   </span>
                 </>
               }
-              label={t.bagProofs}
+              label={t("bagProofs")}
               valueColor={toneText(ratioTone(confirmed, single.providers.length))}
             />
             <MetricTile
@@ -268,53 +285,49 @@ export function BagExplorer() {
                   </>
                 )
               }
-              label={checkedAt === null ? t.bagChecks : `${t.bagChecks} · ${ago(nowSec - checkedAt, t)}`}
-              valueColor={checkedAt === null ? "var(--ts-hint)" : toneText(ratioTone(passed, single.providers.length))}
+              label={checkedAt === null ? t("bagChecks") : `${t("bagChecks")} · ${fmt.ago(nowSec, checkedAt, time.ago)}`}
+              valueColor={checkedAt === null ? "var(--text-2)" : toneText(ratioTone(passed, single.providers.length))}
             />
           </div>
-          <SectionHeader title={t.bagSection} />
-          <Card>
+          <FieldGroup title={t("bagSection")} className={list.group}>
             {single.bag_id && (
-              <CopyRow label={t.bagId} copyValue={single.bag_id}>
+              <CopyRow label={t("bagId")} copyValue={single.bag_id} mono>
                 <a
                   className={styles.link}
                   href={bagGatewayUrl(single.bag_id)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {shorten(single.bag_id, 12).toUpperCase()}
+                  <ShortId value={single.bag_id} />
                 </a>
               </CopyRow>
             )}
-            <FieldRow divider label={t.bagSize} value={formatBytes(single.size)} />
-            <FieldRow divider label={t.bagChunk} value={formatBytes(single.chunk_size)} />
+            <FieldRow label={t("bagSize")} value={fmt.bytes(single.size)} />
+            <FieldRow label={t("bagChunk")} value={fmt.bytes(single.chunk_size)} />
             {single.merkle_hash && (
-              <CopyRow label={t.bagMerkle} copyValue={single.merkle_hash} divider>
-                <span className={styles.mono}>{shorten(single.merkle_hash, 12)}</span>
+              <CopyRow label={t("bagMerkle")} copyValue={single.merkle_hash} mono>
+                <ShortId value={single.merkle_hash} />
               </CopyRow>
             )}
-            <FieldRow divider label={t.bagDepth} value={single.key_len ?? EMPTY} />
-          </Card>
+            <FieldRow label={t("bagDepth")} value={single.key_len ?? EMPTY} />
+          </FieldGroup>
 
-          <SectionHeader title={t.bagContract} />
-          <Card>
+          <FieldGroup title={t("bagContract")} className={list.group}>
             <ContractRows bag={single} />
-          </Card>
+          </FieldGroup>
 
           <div className={styles.count}>
-            {t.list} · {single.providers.length}
+            {t("list")} · {single.providers.length}
           </div>
-          <div className={styles.list}>
-            {single.providers.map((prov) => {
+          <Card striped className={styles.list}>
+            {single.providers.map((prov, index) => {
               const listed = providers.find((p) => p.pubkey === prov.pubkey);
               const off = mismatch(prov, listed);
               // A provider of your own has his screen a tap away in Subscriptions, and opening
               // him from here would only walk back to the list this bag was picked from.
-              const open = subscribed.includes(prov.pubkey)
-                ? undefined
-                : () => navigate(`/provider/${prov.pubkey}`);
-              return (
-                <div key={prov.pubkey} className={cx(styles.providerCard, open && styles.press)} onClick={open}>
+              const open = subscribed.includes(prov.pubkey) ? undefined : () => navigate(`/provider/${prov.pubkey}`);
+              const body = (
+                <>
                   <div className={styles.title} style={{ color: toneText(stateTone(prov.state)) }}>
                     {stateText(prov.state, t)}
                   </div>
@@ -322,74 +335,82 @@ export function BagExplorer() {
                     className={styles.sub}
                     style={prov.reason ? { color: toneText(reasonTone(prov.reason)) } : undefined}
                   >
-                    {reasonText(prov.reason, t)}
+                    {reasonText(prov.reason, locale)}
                   </div>
-                  <CopyRow label={t.bagProvider} copyValue={prov.pubkey} divider compact>
-                    <span className={styles.pk}>
-                      {names[prov.pubkey] || shorten(prov.pubkey, 16).toUpperCase()}
-                    </span>
-                  </CopyRow>
-                  <FieldRow
-                    divider
-                    compact
-                    label={t.maxSpanF}
-                    value={
-                      <>
-                        <span style={off.span ? { color: toneText("red") } : undefined}>
-                          {prov.payment_max_span !== null ? formatTime(prov.payment_max_span, t) : EMPTY}
-                        </span>
-                        <span className={styles.slash}>/</span>
-                        {listed ? formatTime(listed.maxSpan, t) : EMPTY}
-                      </>
-                    }
-                  />
-                  <FieldRow
-                    divider
-                    compact
-                    label={t.bagRate}
-                    value={
-                      <>
-                        <span style={off.rate ? { color: toneText("red") } : undefined}>
-                          {prov.rate_per_mb_day !== null ? formatCount(prov.rate_per_mb_day) : EMPTY}
-                        </span>
-                        <span className={styles.slash}>/</span>
-                        {listed ? formatCount(Math.round(listed.price / PRICE_MB_DAYS)) : EMPTY}
-                      </>
-                    }
-                  />
-                  <FieldRow
-                    divider
-                    compact
-                    label={t.lastProof}
-                    value={prov.last_proof_at ? ago(nowSec - prov.last_proof_at, t) : EMPTY}
-                  />
-                  <FieldRow
-                    divider
-                    compact
-                    label={t.nextProof}
-                    value={nextProofValue(
-                      prov.last_proof_at,
-                      prov.payment_max_span,
-                      nowSec,
-                      t,
-                      prov.state === "not_confirmed",
-                    )}
-                  />
-                  <CopyRow label={t.bagNextByte} copyValue={String(prov.next_proof_byte ?? "")} divider compact>
-                    <span className={styles.mono}>
-                      {prov.next_proof_byte !== null ? formatCount(prov.next_proof_byte) : EMPTY}
-                    </span>
-                  </CopyRow>
-                  <CopyRow label={t.bagNonce} copyValue={prov.nonce ?? ""} divider compact>
-                    <span className={styles.mono}>{prov.nonce ?? EMPTY}</span>
-                  </CopyRow>
+                  <FieldList divided className={styles.rows}>
+                    <CopyRow label={t("bagProvider")} copyValue={prov.pubkey} mono={!names[prov.pubkey]}>
+                      {names[prov.pubkey] || <ShortId value={prov.pubkey} />}
+                    </CopyRow>
+                    <FieldRow
+                      label={t("maxSpanF")}
+                      value={
+                        <>
+                          <span style={off.span ? { color: toneText("red") } : undefined}>
+                            {prov.payment_max_span !== null ? fmt.duration(prov.payment_max_span, time.duration) : EMPTY}
+                          </span>
+                          <span className={styles.slash}>/</span>
+                          {listed ? fmt.duration(listed.maxSpan, time.duration) : EMPTY}
+                        </>
+                      }
+                    />
+                    <FieldRow
+                      label={t("bagRate")}
+                      value={
+                        <>
+                          <span style={off.rate ? { color: toneText("red") } : undefined}>
+                            {prov.rate_per_mb_day !== null ? fmt.groupDigits(prov.rate_per_mb_day) : EMPTY}
+                          </span>
+                          <span className={styles.slash}>/</span>
+                          {listed?.price != null ? fmt.groupDigits(Math.round(listed.price / PRICE_MB_DAYS)) : EMPTY}
+                        </>
+                      }
+                    />
+                    <FieldRow label={t("lastProof")} value={fmt.ago(nowSec, prov.last_proof_at, time.ago)} />
+                    <FieldRow
+                      label={t("nextProof")}
+                      value={nextProofValue(
+                        prov.last_proof_at,
+                        prov.payment_max_span,
+                        nowSec,
+                        t,
+                        time,
+                        prov.state === "not_confirmed",
+                      )}
+                    />
+                    <CopyRow label={t("bagNextByte")} copyValue={String(prov.next_proof_byte ?? "")} mono>
+                      {prov.next_proof_byte !== null ? fmt.groupDigits(prov.next_proof_byte) : EMPTY}
+                    </CopyRow>
+                    <CopyRow label={t("bagNonce")} copyValue={prov.nonce ?? ""} mono>
+                      {prov.nonce ?? EMPTY}
+                    </CopyRow>
+                  </FieldList>
+                </>
+              );
+              const alt = index % 2 === 1 || undefined;
+              return open ? (
+                <OpenRow
+                  key={prov.pubkey}
+                  onOpen={open}
+                  label={`${t("providerDetails")} ${names[prov.pubkey] || shortKey(prov.pubkey)}`}
+                  data-alt={alt}
+                >
+                  {body}
+                </OpenRow>
+              ) : (
+                <div key={prov.pubkey} data-alt={alt} className={styles.plain}>
+                  {body}
                 </div>
               );
             })}
-          </div>
-          <a className={styles.report} href={REPORT_BOT} target="_blank" rel="noopener noreferrer">
-            <Icon glyph="warn" size={15} color="var(--ts-danger)" />
-            {t.bagReport}
+          </Card>
+          <a
+            className={buttonClass({ variant: "text", tone: "red" }, styles.report)}
+            href={REPORT_BOT}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <TriangleAlert size={15} />
+            {t("bagReport")}
           </a>
         </>
       )}
@@ -397,66 +418,61 @@ export function BagExplorer() {
   );
 }
 
-function BagSkeleton({ t }: { t: Dict }) {
-  const row = (i: number, valueClass: string) => (
-    <FieldRow
-      key={i}
-      divider={i > 0}
-      label={<span className={styles.skLabel} />}
-      value={<span className={valueClass} />}
-    />
-  );
+// The explorer's answer with every row standing in, in the order the loaded screen has, or the layout jumps once the
+// answer arrives.
+const BAG_ROWS: PlaceholderWidths[] = [
+  { label: "22%", value: "40%" },
+  { label: "18%", value: "30%" },
+  { label: "24%", value: "30%" },
+  { label: "26%", value: "40%" },
+  { label: "16%", value: "18%" },
+];
+const CONTRACT_ROWS: PlaceholderWidths[] = [
+  { label: "22%", value: "40%" },
+  { label: "18%", value: "40%" },
+  { label: "26%", value: "22%" },
+];
+const SLOT_ROWS: PlaceholderWidths[] = [
+  { label: "22%", value: "30%" },
+  { label: "18%", value: "30%" },
+  { label: "24%", value: "40%" },
+  { label: "26%", value: "30%" },
+  { label: "20%", value: "30%" },
+  { label: "16%", value: "40%" },
+  { label: "22%", value: "40%" },
+];
+
+function BagSkeleton() {
+  const { t } = useTranslation();
   return (
     <>
-      {/* Same order the loaded screen has, or the layout jumps once the answer arrives. */}
-      <Card className={styles.stateCard}>
+      <Card frame className={styles.stateCard}>
         <div className={styles.title}>
-          <span className={styles.skTitle} />
+          <span className={skeletonClass(styles.shapeTitle)} />
         </div>
       </Card>
       <div className={styles.tiles}>
-        {[0, 1].map((key) => (
-          <div key={key} className={styles.skTile}>
-            <span className={styles.skValueNarrow} />
-          </div>
-        ))}
+        <MetricTile value={<GhostValue sample="0/0" className={styles.tileGhost} />} label={t("bagProofs")} />
+        <MetricTile value={<GhostValue sample="0/0" className={styles.tileGhost} />} label={t("bagChecks")} />
       </div>
-      <SectionHeader title={t.bagSection} />
-      <Card>
-        {row(0, styles.skValueWide)}
-        {row(1, styles.skValueMid)}
-        {row(2, styles.skValueMid)}
-        {row(3, styles.skValueWide)}
-        {row(4, styles.skValueNarrow)}
-      </Card>
-      <SectionHeader title={t.bagContract} />
-      <Card>
-        {row(0, styles.skValueWide)}
-        {row(1, styles.skValueWide)}
-        {row(2, styles.skValueNarrow)}
-        {row(3, styles.skValueNarrow)}
-      </Card>
+      <FieldGroup title={t("bagSection")} className={list.group}>
+        {BAG_ROWS.map((row, index) => (
+          <PlaceholderRow key={index} {...row} />
+        ))}
+      </FieldGroup>
+      <FieldGroup title={t("bagContract")} className={list.group}>
+        {CONTRACT_ROWS.map((row, index) => (
+          <PlaceholderRow key={index} {...row} />
+        ))}
+      </FieldGroup>
       <div className={styles.count}>
-        <span className={styles.countBar} />
+        <span className={skeletonClass(styles.countBar)} />
       </div>
-      <div className={styles.list}>
+      <Card striped className={styles.list}>
         {[0, 1].map((key) => (
-          <Card key={key}>
-            <div className={styles.title}>
-              <span className={styles.skTitle} />
-            </div>
-            <div className={styles.sub}>
-              <span className={styles.skSub} />
-            </div>
-            {row(0, styles.skValueMid)}
-            {row(1, styles.skValueMid)}
-            {row(2, styles.skValueWide)}
-            {row(3, styles.skValueMid)}
-            {row(4, styles.skValueMid)}
-            {row(5, styles.skValueWide)}
-          </Card>
+          <BagCardSkeleton key={key} rows={SLOT_ROWS} alt={key === 1} />
         ))}
-      </div>
+      </Card>
     </>
   );
 }

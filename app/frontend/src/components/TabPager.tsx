@@ -1,10 +1,12 @@
-import { reducedMotion } from "@/lib/motion";
+import { reducedMotion, tabId, tabPanelId } from "@myton/ui";
 import { type MutableRefObject, type ReactNode, type UIEvent, useEffect, useLayoutEffect, useRef } from "react";
 import styles from "./TabPager.module.css";
 
 const SETTLE_MS = 140;
 
 interface TabPagerProps<T extends string> {
+  // The id prefix the dock's tabs name their panes by.
+  ids: string;
   tabs: readonly T[];
   tab: T;
   scrubRef?: MutableRefObject<(position: number | null) => void>;
@@ -16,6 +18,7 @@ interface TabPagerProps<T extends string> {
 }
 
 export function TabPager<T extends string>({
+  ids,
   tabs,
   tab,
   scrubRef,
@@ -26,7 +29,7 @@ export function TabPager<T extends string>({
   children,
 }: TabPagerProps<T>) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const settleTimer = useRef<ReturnType<typeof setTimeout>>();
+  const settleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const settleRef = useRef<() => void>(() => {});
   const dragging = useRef(false);
   const ready = useRef(false);
@@ -134,8 +137,8 @@ export function TabPager<T extends string>({
           }}
           className={styles.pane}
           role="tabpanel"
-          id={`pane-${key}`}
-          aria-labelledby={`tab-${key}`}
+          id={tabPanelId(ids, key)}
+          aria-labelledby={tabId(`${ids}-dock`, key)}
           onScroll={(event) => onPaneScroll?.(key, event.currentTarget.scrollTop)}
         >
           <div className={styles.inner}>{children(key)}</div>

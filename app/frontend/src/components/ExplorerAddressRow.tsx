@@ -1,34 +1,29 @@
-import { CopyRow } from "@/components/CopyRow";
+import { FieldRow, ShortId, useCopyFeedback } from "@myton/ui";
 import { TrustedBadge } from "@/components/TrustedBadge";
-import { explorerAddressUrl } from "@/lib/address";
-import { shorten } from "@/lib/format";
+import { explorerUrl } from "@myton/ui/domain";
 import { useNames } from "@/stores/names";
 import { useSettings } from "@/stores/settings";
-import styles from "./ExplorerAddressRow.module.css";
 
 interface ExplorerAddressRowProps {
   label: string;
   address: string;
-  divider?: boolean;
-  compact?: boolean;
 }
 
-export function ExplorerAddressRow({ label, address, divider, compact }: ExplorerAddressRowProps) {
+export function ExplorerAddressRow({ label, address }: ExplorerAddressRowProps) {
   const explorer = useSettings((s) => s.explorer);
   const name = useNames((s) => s.addresses[address]);
-  const nameClass = compact ? styles.nameCompact : styles.name;
-  const linkClass = compact ? styles.linkCompact : styles.link;
+  const { copied, copy } = useCopyFeedback();
+
   return (
-    <CopyRow label={label} copyValue={address} divider={divider} compact={compact}>
-      <a
-        className={name ? nameClass : linkClass}
-        href={explorerAddressUrl(address, explorer)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {name || shorten(address, 12)}
-      </a>
-      <TrustedBadge address={address} />
-    </CopyRow>
+    <FieldRow
+      label={label}
+      value={name || <ShortId value={address} upper={false} />}
+      href={explorerUrl(address, explorer)}
+      title={name ? address : undefined}
+      trailing={<TrustedBadge address={address} />}
+      copy={address}
+      copied={copied === address}
+      onCopy={(value) => void copy(value)}
+    />
   );
 }

@@ -1,5 +1,6 @@
-import { useT } from "@/i18n";
-import { readLocal, writeLocal } from "@/lib/storage";
+import { Share, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { glyphClass, IconButton, readLocal, writeLocal } from "@myton/ui";
 import { isInTelegram } from "@/lib/telegram";
 import { useEffect, useState } from "react";
 import styles from "./InstallBanner.module.css";
@@ -18,31 +19,8 @@ function isIOSSafari(): boolean {
   return iOS && !otherBrowser;
 }
 
-function ShareGlyph() {
-  return (
-    <svg className={styles.share} viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-      <path
-        d="M12 3v11M12 3l-3.2 3.2M12 3l3.2 3.2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7 10H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function InstallBanner() {
-  const t = useT();
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -60,16 +38,16 @@ export function InstallBanner() {
   return (
     <div className={styles.banner}>
       <div className={styles.body}>
-        <div className={styles.title}>{t.installTitle}</div>
+        <div className={styles.title}>{t("installTitle")}</div>
         <div className={styles.hint}>
-          {t.installStep1}
-          <ShareGlyph />
-          {t.installStep2}
+          {t("installStep1")}
+          <Share className={styles.share} size={17} aria-hidden="true" />
+          {t("installStep2")}
         </div>
       </div>
-      <button className={styles.close} onClick={dismiss} aria-label={t.installHide}>
-        ×
-      </button>
+      <IconButton label={t("installHide")} variant="secondary" size="xs" onClick={dismiss}>
+        <X className={glyphClass("xs")} color="var(--text-2)" />
+      </IconButton>
     </div>
   );
 }

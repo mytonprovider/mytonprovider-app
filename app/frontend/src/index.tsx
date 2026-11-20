@@ -1,3 +1,5 @@
+import "@myton/ui/fonts.css";
+import "@myton/ui/styles.css";
 import "@/styles/global.css";
 
 import { StrictMode } from "react";

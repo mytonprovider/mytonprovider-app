@@ -1,0 +1,47 @@
+.title {
+  padding: var(--space-4) var(--row-px) var(--space-3);
+  font-size: var(--font-base);
+  font-weight: var(--w-medium);
+  line-height: var(--line-base);
+  text-align: center;
+}
+
+.sub {
+  padding: 0 var(--row-px) var(--space-3);
+  font-size: var(--font-xs);
+  line-height: var(--line-base);
+  text-align: center;
+  color: var(--text-2);
+  /* The check keeps its own colour - it is the second axis and has to be readable on
+     its own - but yields to the title above it. Both being red at full strength read
+     as one smeared line instead of two answers. */
+  opacity: 0.75;
+}
+
+/* The package's divided rows under the card's title, set off from it by the same full-width hairline. */
+.rows {
+  padding-bottom: var(--space-1);
+  border-top: var(--hairline) solid var(--divider);
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.skeleton {
+  composes: plainRow from "../styles/list.module.css";
+}
+
+.shapeTitle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 42%;
+  height: var(--ts-shape-line);
+}
+
+.shapeSub {
+  composes: shapeTitle;
+  width: 54%;
+  height: var(--ts-shape-line-sm);
+}

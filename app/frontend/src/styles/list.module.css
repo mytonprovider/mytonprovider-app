@@ -1,64 +1,42 @@
 .count {
-  margin: 12px 0 9px;
-  font-size: 13px;
-  color: var(--ts-hint);
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: var(--font-xs);
+  color: var(--text-2);
   text-align: center;
 }
 
 .countWide {
   composes: count;
-  margin-top: 22px;
+  margin-top: var(--space-7);
 }
 
 .countBar {
-  composes: pulse from "./anim.module.css";
   display: inline-block;
   width: 150px;
   max-width: 60%;
-  height: 13px;
+  height: var(--ts-shape-line-sm);
   vertical-align: middle;
-  border-radius: 5px;
-  background: var(--ts-seg);
 }
 
+/* Rows touching and alternating in the package's striped card, as the sites draw their lists. */
 .list {
   composes: fade from "./anim.module.css";
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-.clear {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin: -1px 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+/* The parity comes from the row's place in the whole list: a window mounts a slice of it, so :nth-child would flip
+   the stripes on every scroll step. */
+.list > [data-alt] {
+  --row-surface: var(--row-alt);
 }
 
-.mono {
-  min-width: 0;
-  font-family: var(--ts-font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  color: var(--ts-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* A row that is not an OpenRow paints the stripe itself. */
+.plainRow {
+  background-color: var(--row-surface, var(--row-bg));
 }
 
-.chevron {
-  display: inline-flex;
-  transition: transform 0.2s ease;
-}
-
-.chevronUp {
-  transform: rotate(180deg);
+/* Detail cards stack with this step: on the sites the SectionTitle above each card made it. */
+.group {
+  margin-top: var(--space-5);
 }

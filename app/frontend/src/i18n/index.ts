@@ -1,35 +1,32 @@
+import { createI18n, pickLang, resolveLang, type LangChoice } from "@myton/ui/i18n";
+import { words, type TimeWords } from "@myton/ui/locale";
+import { useTranslation } from "react-i18next";
 import { getTelegramUser, isInTelegram } from "@/lib/telegram";
 import { useSettings } from "@/stores/settings";
-import { useEffect, useState } from "react";
 import { en } from "./en";
 import { ru } from "./ru";
-import type { Dict, Lang } from "./types";
+import type { Lang } from "./types";
 
-const DICTS: Record<Lang, Dict> = { en, ru };
+// The pick lives in the settings store, which the server mirrors; until it is made, the language is Telegram's.
+const choice: LangChoice = {
+  chosen: () => {
+    const { lang, langAuto } = useSettings.getState();
+    return langAuto ? null : lang;
+  },
+  system: () => (isInTelegram() ? getTelegramUser()?.language_code : null),
+};
 
-export function normalizeLang(code: string): Lang {
-  return code.toLowerCase().startsWith("ru") ? "ru" : "en";
-}
-
-function detectLang(): Lang {
-  const telegramCode = isInTelegram() ? getTelegramUser()?.language_code : null;
-  return normalizeLang(telegramCode || navigator.language || "");
+export function initI18n(): void {
+  const i18n = createI18n({ en, ru }, choice);
+  useSettings.subscribe((state, prev) => {
+    if (state.lang !== prev.lang || state.langAuto !== prev.langAuto) void i18n.changeLanguage(resolveLang(choice));
+  });
 }
 
 export function useAppliedLang(): Lang {
-  const lang = useSettings((state) => state.lang);
-  const langAuto = useSettings((state) => state.langAuto);
-  const [detected, setDetected] = useState(detectLang);
-
-  useEffect(() => {
-    const handler = () => setDetected(detectLang());
-    window.addEventListener("languagechange", handler);
-    return () => window.removeEventListener("languagechange", handler);
-  }, []);
-
-  return langAuto ? detected : lang;
+  return pickLang(useTranslation().i18n.language);
 }
 
-export function useT(): Dict {
-  return DICTS[useAppliedLang()];
+export function useTimeWords(): TimeWords {
+  return words[useAppliedLang()];
 }

@@ -1,25 +1,23 @@
 .chart {
-  margin: 14px -14px 0;
-  padding: 14px 14px 0;
-  border-top: var(--ts-hairline) solid var(--ts-sepf);
+  padding-block: var(--space-5);
 }
 
 .head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .label {
-  font-size: 13.5px;
-  color: var(--ts-hint);
+  font-size: var(--font-xs);
+  color: var(--text-2);
 }
 
 .current {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--w-value);
 }
 
 .svg {
@@ -33,18 +31,17 @@
 }
 
 .scrubValue {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ts-accent);
+  font-size: var(--font-base);
+  font-weight: var(--w-value);
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 
 .thresholdLabel {
   position: absolute;
-  right: 6px;
+  right: var(--space-2);
   transform: translateY(-110%);
-  font-size: 9.5px;
-  color: #ff3b30;
+  font-size: var(--font-xs);
   opacity: 0.75;
   pointer-events: none;
 }
@@ -53,20 +50,7 @@
   transform: translateY(15%);
 }
 
-.skel {
-  composes: pulse from "../styles/anim.module.css";
-  border-radius: 6px;
-  background: var(--ts-seg);
-}
-
-.skelValue {
-  composes: skel;
+.shapeValue {
   width: 48px;
-  height: 13px;
-}
-
-.skelBody {
-  composes: skel;
-  height: 60px;
-  border-radius: 8px;
+  height: var(--ts-shape-line-sm);
 }

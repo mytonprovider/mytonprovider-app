@@ -1,96 +1,54 @@
 .root {
   display: flex;
+  flex: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 30px;
-  min-height: 252px;
+  padding: var(--space-7) var(--space-5) var(--space-4);
 }
 
 .mark {
   display: inline-flex;
+  color: var(--accent);
+  filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent));
+}
+
+.disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--btn);
+  color: var(--btn-ink);
 }
 
 .title {
-  margin-top: 14px;
+  margin-top: var(--space-25);
   text-wrap: balance;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--tracking-tight);
 }
 
 .desc {
-  margin-top: 7px;
-  max-width: 270px;
-  min-height: 39px;
+  margin-top: var(--space-05);
+  max-width: 320px;
+  min-height: calc(2em * var(--line-base));
   text-wrap: balance;
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--ts-hint);
-}
-
-.button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  width: 100%;
-  padding: 13px;
-  border: none;
-  border-radius: var(--ts-radius-field);
-  background: var(--ts-accent);
-  color: var(--ts-on-accent);
-  font-size: 15.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.15s ease;
-}
-
-.button:active {
-  transform: scale(0.98);
+  font-size: var(--font-base);
+  line-height: var(--line-base);
+  color: var(--text-2);
 }
 
 .action {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-4);
   width: 100%;
   max-width: 260px;
-  margin: 16px auto 0;
-}
-
-.hero {
-  flex: none;
-  padding: 20px 12px 10px;
-  min-height: 0;
-}
-
-.hero .mark {
-  filter: drop-shadow(0 6px 18px rgba(0, 152, 234, 0.35));
-}
-
-.disc {
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-}
-
-.hero .title {
-  margin-top: 7px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-}
-
-.hero .desc {
-  margin-top: 3px;
-  max-width: 320px;
-  min-height: 35px;
-  font-size: 13px;
-  line-height: 1.35;
+  margin: var(--space-6) auto 0;
 }

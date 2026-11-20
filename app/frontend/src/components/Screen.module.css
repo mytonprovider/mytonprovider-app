@@ -9,9 +9,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  padding-bottom: 48px;
-  padding-inline: max(16px, var(--ts-column));
+  padding-bottom: var(--ts-screen-end);
+  padding-inline: max(var(--space-6), var(--ts-column));
   scrollbar-width: none;
+}
+
+.flush {
+  padding-inline: 0;
 }
 
 .scroll::-webkit-scrollbar {

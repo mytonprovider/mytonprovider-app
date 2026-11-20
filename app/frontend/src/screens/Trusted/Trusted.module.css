@@ -1,32 +1,13 @@
 .field {
-  margin-top: 14px;
-  padding-right: 8px;
-}
-
-.add {
-  flex: none;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 9px;
-  background: var(--ts-accent);
-  color: var(--ts-on-accent);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.add:disabled {
-  opacity: 0.4;
-  cursor: default;
+  margin-top: var(--space-5);
+  padding-right: var(--space-3);
 }
 
 .error {
-  margin: 9px 0 2px;
-  font-size: 12.5px;
-  line-height: 1.35;
-  color: var(--ts-danger);
+  margin: var(--space-3) 0 var(--space-0);
+  font-size: var(--font-xs);
+  line-height: var(--line-base);
+  color: var(--btn-danger);
   text-align: center;
 }
 
@@ -38,61 +19,54 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin: 14px 0 0;
-  font-size: 12.5px;
-  color: var(--ts-hint);
+  gap: var(--space-2);
+  margin: var(--space-5) 0 0;
+  font-size: var(--font-base);
+  color: var(--text-2);
 }
 
 .noteBadge {
   composes: badge from "../../components/TrustedBadge.module.css";
 }
 
-.row {
-  composes: row from "../../components/FieldRow.module.css";
-}
-
-.divider {
-  composes: divider from "../../components/FieldRow.module.css";
-}
-
+/* The address sits in the cell's label: a box of its own, so a long name cuts with an ellipsis. */
 .link {
-  composes: link from "../../components/ExplorerAddressRow.module.css";
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+  font-size: var(--font-base);
+  color: var(--accent);
+  text-decoration: none;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .name {
-  composes: name from "../../components/ExplorerAddressRow.module.css";
+  composes: link;
+  composes: ellipsis from "@myton/ui/text.module.css";
 }
 
+/* The 26px buttons keep the bare 16px icons 28px apart, flush right, 12px past the channel chip, inside the cell's
+   44. */
 .actions {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-0);
+  margin: -5px -5px -5px 0;
 }
 
 .channel {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 9px 4px 7px;
-  border-radius: var(--ts-radius-seg);
-  background: rgba(0, 152, 234, 0.13);
-  color: var(--ts-accent);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1;
+  display: flex;
+  margin-right: var(--space-2);
+  text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-.action {
+.channelIcon {
   flex: none;
-  display: flex;
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  color: var(--accent);
 }

@@ -5,7 +5,7 @@ interface AlertType {
   threshold: boolean;
 }
 
-export interface AlertGroup {
+interface AlertGroup {
   key: AlertGroupKey;
   types: AlertType[];
 }

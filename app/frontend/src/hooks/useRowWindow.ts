@@ -25,7 +25,7 @@ function scrollerOf(node: HTMLElement): HTMLElement | null {
 // height of the whole list. Heights are measured as rows pass through the window and the unseen
 // ones priced at the average seen so far - catalog rows all come out the same height, bag cards
 // do not, and a declared height would drift the first time a card gains a row.
-export function useRowWindow(listRef: RefObject<HTMLElement>, count: number): RowWindow {
+export function useRowWindow(listRef: RefObject<HTMLElement | null>, count: number): RowWindow {
   const sizes = useRef<number[]>([]);
   const shown = useRef<RowWindow>(COLD);
   const [slot, setSlot] = useState<RowWindow>(COLD);

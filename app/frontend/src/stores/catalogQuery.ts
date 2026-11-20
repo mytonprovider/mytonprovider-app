@@ -1,8 +1,7 @@
-import { DEFAULT_FILTERS, EMPTY_FILTERS, SORT_FIELDS } from "@/data/query";
-import { readLocal, writeLocal } from "@/lib/storage";
-import type { CatalogFilters, Sort, SortField } from "@/data/types";
+import { readLocal, writeLocal } from "@myton/ui";
+import { nextSortDirection, START_FILTERS, type FilterValues, type SortField } from "@myton/ui/domain";
+import type { Sort } from "@/data/types";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export type Tab = "list" | "subs" | "fav";
 
@@ -21,52 +20,24 @@ interface CatalogQueryState {
   tab: Tab;
   search: string;
   sort: Sort;
-  filters: CatalogFilters;
+  filters: FilterValues;
   setTab: (tab: Tab) => void;
   setSearch: (search: string) => void;
   setSortField: (field: SortField) => void;
-  setFilters: (filters: CatalogFilters) => void;
+  setFilters: (filters: FilterValues) => void;
   resetFilters: () => void;
 }
 
-export const useCatalogQuery = create<CatalogQueryState>()(
-  persist(
-    (set) => ({
-      tab: startTab(),
-      search: "",
-      sort: { field: "rating", dir: "desc" },
-      filters: DEFAULT_FILTERS,
-      setTab: (tab) => set({ tab }),
-      setSearch: (search) => set({ search }),
-      setSortField: (field) =>
-        set((state) => ({
-          sort:
-            state.sort.field === field
-              ? { field, dir: state.sort.dir === "asc" ? "desc" : "asc" }
-              : { field, dir: "desc" },
-        })),
-      setFilters: (filters) => set({ filters }),
-      // Returning to the opening pair left the list cut with the dot lit, which is not a reset.
-      resetFilters: () => set({ filters: EMPTY_FILTERS }),
-    }),
-    {
-      name: "mtp-filters",
-      version: 2,
-      // The old shape kept a single value, not a set; it is dropped rather than converted.
-      migrate: () => ({ filters: DEFAULT_FILTERS }),
-      partialize: (state) => ({ filters: state.filters, sort: state.sort }),
-      // Only what was saved comes back: a key it never had stays unset, an unknown sort is dropped.
-      merge: (persisted, current) => {
-        const state = { ...current, ...(persisted as Partial<CatalogQueryState>) };
-        return {
-          ...state,
-          filters: { ...EMPTY_FILTERS, ...state.filters },
-          sort:
-            SORT_FIELDS.includes(state.sort?.field) && ["asc", "desc"].includes(state.sort.dir)
-              ? state.sort
-              : current.sort,
-        };
-      },
-    },
-  ),
-);
+// Neither the sort nor the filters outlive a launch, as on the sites.
+export const useCatalogQuery = create<CatalogQueryState>()((set) => ({
+  tab: startTab(),
+  search: "",
+  sort: { field: "rating", dir: "desc" },
+  filters: START_FILTERS,
+  setTab: (tab) => set({ tab }),
+  setSearch: (search) => set({ search }),
+  setSortField: (field) =>
+    set((state) => ({ sort: { field, dir: nextSortDirection(field, state.sort.field, state.sort.dir) } })),
+  setFilters: (filters) => set({ filters }),
+  resetFilters: () => set({ filters: START_FILTERS }),
+}));

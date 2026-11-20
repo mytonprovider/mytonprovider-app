@@ -1,17 +1,22 @@
 import { HttpError } from "@/data/http";
 import { fetchCatalog } from "@/data/providersApi";
-import { computeBounds, computeRanks } from "@/data/query";
-import type { FilterBounds, Provider } from "@/data/types";
+import {
+  CATALOG_FRESH_MS,
+  filterEdges,
+  filterOptions,
+  type FilterEdges,
+  type ListId,
+  type ListOption,
+} from "@myton/ui/domain";
+import type { Provider } from "@/data/types";
 import { create } from "zustand";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
 
-const STALE_MS = 120_000;
-
 interface CatalogState {
   providers: Provider[];
-  ranks: Record<string, number>;
-  bounds: FilterBounds | null;
+  edges: FilterEdges | null;
+  options: Record<ListId, ListOption[]>;
   status: LoadStatus;
   errorStatus: number | null;
   loadedAt: number;
@@ -26,8 +31,8 @@ export const useCatalog = create<CatalogState>((set, get) => {
       const providers = await fetchCatalog();
       set({
         providers,
-        ranks: computeRanks(providers),
-        bounds: computeBounds(providers),
+        edges: filterEdges(providers, Date.now() / 1000),
+        options: filterOptions(providers),
         status: "ready",
         errorStatus: null,
         loadedAt: Date.now(),
@@ -45,8 +50,8 @@ export const useCatalog = create<CatalogState>((set, get) => {
 
   return {
     providers: [],
-    ranks: {},
-    bounds: null,
+    edges: null,
+    options: filterOptions([]),
     status: "idle",
     errorStatus: null,
     loadedAt: 0,
@@ -54,7 +59,7 @@ export const useCatalog = create<CatalogState>((set, get) => {
       const { status, loadedAt } = get();
       if (status === "loading") return;
       if (status === "ready") {
-        if (Date.now() - loadedAt > STALE_MS) await fetchAll(true);
+        if (Date.now() - loadedAt > CATALOG_FRESH_MS) await fetchAll(true);
         return;
       }
       await fetchAll(false);

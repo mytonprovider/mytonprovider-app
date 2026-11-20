@@ -1,28 +1,26 @@
-import { CopyButton } from "@/components/CopyButton";
-import { cx } from "@/lib/cx";
+import { FieldRow, useCopyFeedback } from "@myton/ui";
 import type { ReactNode } from "react";
-import styles from "./CopyRow.module.css";
 
-export function CopyRow({
-  label,
-  copyValue,
-  divider,
-  compact,
-  children,
-}: {
+interface CopyRowProps {
   label: string;
   copyValue: string | null;
-  divider?: boolean;
-  compact?: boolean;
+  title?: string;
+  mono?: boolean;
   children: ReactNode;
-}) {
+}
+
+export function CopyRow({ label, copyValue, title, mono, children }: CopyRowProps) {
+  const { copied, copy } = useCopyFeedback();
+
   return (
-    <div className={cx(compact ? styles.copyRowCompact : styles.copyRow, divider && styles.copyRowDivider)}>
-      <span className={styles.copyLabel}>{label}</span>
-      <span className={styles.copyValue}>
-        {children}
-        {copyValue && <CopyButton value={copyValue} />}
-      </span>
-    </div>
+    <FieldRow
+      label={label}
+      value={children}
+      title={title}
+      mono={mono}
+      copy={copyValue ?? undefined}
+      copied={copyValue !== null && copied === copyValue}
+      onCopy={(value) => void copy(value)}
+    />
   );
 }

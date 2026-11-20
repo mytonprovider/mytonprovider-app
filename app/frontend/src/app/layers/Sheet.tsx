@@ -1,18 +1,17 @@
-import { cx } from "@/lib/cx";
-import { reducedMotion } from "@/lib/motion";
+import { cx, reducedMotion, SheetHeader, SheetPanel, toMs, useSheetDrag } from "@myton/ui";
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "./Sheet.module.css";
 import type { SheetHeight } from "./presentation";
-import { useSheetDrag } from "./useSheetDrag";
 
-const OPEN_MS = 420;
-const CLOSE_MS = 260;
-const CLOSE_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
+const TitleSlot = createContext<HTMLDivElement | null>(null);
 
-const SheetContext = createContext(false);
-
-export function useInSheet(): boolean {
-  return useContext(SheetContext);
+// A routed sheet names itself from inside: the header lands above the padded body, as a full-height screen's does.
+export function SheetTitle({ title, onClose }: { title: string; onClose: () => void }) {
+  const slot = useContext(TitleSlot);
+  return (
+    slot && createPortal(<SheetHeader title={title} grabber={false} onClose={onClose} className={styles.header} />, slot)
+  );
 }
 
 interface SheetProps {
@@ -30,26 +29,19 @@ interface SheetProps {
 export function Sheet({ height, depth, top, closing, title, subtitle, onDismiss, onClosed, children }: SheetProps) {
   const layerRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
-  const grabberRef = useRef<HTMLButtonElement>(null);
   const { ref: dragRef, element: sheetRef, offset, dragging, handlers } = useSheetDrag(top && !closing, onDismiss);
+  const [titleSlot, setTitleSlot] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const layer = layerRef.current;
     if (layer) layer.inert = !top;
   }, [top]);
 
-  const [entering, setEntering] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setEntering(false), OPEN_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
   const opener = useRef<Element | null>(null);
   opener.current ??= document.activeElement;
 
   useEffect(() => {
-    grabberRef.current?.focus({ preventScroll: true });
+    sheetRef.current?.focus({ preventScroll: true });
     return () => {
       const previous = opener.current;
       requestAnimationFrame(() => {
@@ -64,24 +56,27 @@ export function Sheet({ height, depth, top, closing, title, subtitle, onDismiss,
   useEffect(() => {
     const sheet = sheetRef.current;
     if (!closing || !sheet) return;
-    const from = getComputedStyle(sheet).transform;
-    const duration = reducedMotion() ? 0 : CLOSE_MS;
+    const style = getComputedStyle(sheet);
+    const from = style.transform;
+    const close = toMs(style.getPropertyValue("--dur-base"));
+    const easing = style.getPropertyValue("--ease-sheet").trim();
+    const duration = reducedMotion() ? 0 : close;
     const slide = sheet.animate([{ transform: from === "none" ? "translateY(0px)" : from }, { transform: "translateY(100%)" }], {
       duration,
-      easing: CLOSE_EASE,
+      easing,
       fill: "forwards",
     });
     const scrim = scrimRef.current;
     if (scrim) {
       scrim.animate([{ opacity: getComputedStyle(scrim).opacity }, { opacity: 0 }], {
         duration,
-        easing: CLOSE_EASE,
+        easing,
         fill: "forwards",
       });
     }
     const finish = () => closed.current();
     slide.addEventListener("finish", finish);
-    const timer = setTimeout(finish, CLOSE_MS * 2);
+    const timer = setTimeout(finish, close * 2);
     return () => {
       slide.removeEventListener("finish", finish);
       clearTimeout(timer);
@@ -98,25 +93,20 @@ export function Sheet({ height, depth, top, closing, title, subtitle, onDismiss,
       aria-label={title}
     >
       <div ref={scrimRef} className={styles.scrim} onClick={top && !closing ? onDismiss : undefined} />
-      <div
+      <SheetPanel
         ref={dragRef}
-        className={cx(
-          styles.sheet,
-          styles[height],
-          entering && styles.entering,
-          dragging && styles.dragging,
-          !closing && !top && styles.behind,
-        )}
+        className={cx(styles.sheet, styles[height], dragging && styles.dragging, !closing && !top && styles.behind)}
         style={offset > 0 ? { transform: `translateY(${offset}px)` } : undefined}
+        onClose={onDismiss}
         {...handlers}
       >
-        <button ref={grabberRef} type="button" className={styles.grabber} aria-label="Close" onClick={onDismiss} />
-        {title && <div className={styles.title}>{title}</div>}
+        {title && <SheetHeader title={title} grabber={false} onClose={onDismiss} className={styles.header} />}
         {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
-        <SheetContext.Provider value>
-          <div className={styles.body}>{children}</div>
-        </SheetContext.Provider>
-      </div>
+        <div ref={setTitleSlot} className={styles.titleSlot} />
+        <div className={styles.body}>
+          <TitleSlot.Provider value={titleSlot}>{children}</TitleSlot.Provider>
+        </div>
+      </SheetPanel>
     </div>
   );
 }

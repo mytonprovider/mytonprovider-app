@@ -1,42 +1,34 @@
-import { CopyButton } from "@/components/CopyButton";
-import { Icon } from "@/components/Icon/Icon";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { StatusDot } from "@/components/StatusDot";
-import { toggleFavorite } from "@/data/sync";
-import { useT } from "@/i18n";
-import { ACCENT } from "@/lib/colors";
-import { shorten } from "@/lib/format";
-import { useFavorites } from "@/stores/favorites";
+import { FavoriteButton, ShareButton, ShortId } from "@myton/ui";
+import { locales } from "@myton/ui/locale";
+import { useProviderActions } from "@/hooks/useProviderActions";
+import { useAppliedLang } from "@/i18n";
 import { useNames } from "@/stores/names";
-import styles from "./ProviderHeader.module.css";
 
 interface ProviderHeaderProps {
   pubkey: string;
-  color: string;
   onBack: () => void;
+  // A screen about the provider's bags rather than the provider names it and only closes.
+  actions?: boolean;
 }
 
-export function ProviderHeader({ pubkey, color, onBack }: ProviderHeaderProps) {
-  const t = useT();
-  const isFavorite = useFavorites((s) => s.favorites.includes(pubkey));
+export function ProviderHeader({ pubkey, onBack, actions = true }: ProviderHeaderProps) {
+  const locale = locales[useAppliedLang()];
   const name = useNames((s) => s.providers[pubkey]);
+  const { favorite, share } = useProviderActions(pubkey);
 
   return (
     <ScreenHeader
-      title={
-        <span className={styles.navTitle}>
-          <StatusDot color={color} size={8} />
-          <span className={styles.navName}>{name || shorten(pubkey, 14).toUpperCase()}</span>
-          <CopyButton value={pubkey} />
-        </span>
-      }
+      title={name || locale.filters.group.provider}
+      lead={name ? undefined : <ShortId value={pubkey} />}
       onBack={onBack}
       right={
-        <div className={styles.headerActions}>
-          <button type="button" aria-label={t.fav} className={styles.headerBtn} onClick={() => toggleFavorite(pubkey)}>
-            <Icon glyph="star" size={22} fill={isFavorite ? ACCENT : "none"} strokeColor={isFavorite ? ACCENT : "var(--ts-hint)"} />
-          </button>
-        </div>
+        actions && (
+          <>
+            <FavoriteButton size="sm" {...favorite} />
+            {share && <ShareButton size="sm" {...share} />}
+          </>
+        )
       }
     />
   );

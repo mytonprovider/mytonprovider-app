@@ -1,15 +1,15 @@
-import { Icon } from "@/components/Icon/Icon";
+import { TelegramIcon } from "@myton/ui";
 import { useLogin } from "@/hooks/useLogin";
-import { useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
 import styles from "./TelegramLoginButton.module.css";
 
 export function TelegramLoginButton() {
-  const t = useT();
+  const { t } = useTranslation();
   const { start } = useLogin();
   return (
     <button type="button" className={styles.button} onClick={start}>
-      <Icon glyph="telegram" size={20} color="#fff" />
-      {t.loginTg}
+      <TelegramIcon className={styles.icon} />
+      {t("loginTg")}
     </button>
   );
 }

@@ -1,22 +1,24 @@
-import { Icon } from "@/components/Icon/Icon";
-import type { GlyphName } from "@/components/Icon/glyphs";
-import { cx } from "@/lib/cx";
-import type { ReactNode } from "react";
-import styles from "./Field.module.css";
+import { Lock } from "lucide-react";
+import { SearchField, TextField } from "@myton/ui";
+import type { KeyboardEvent, ReactNode } from "react";
 
 interface FieldProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  glyph?: GlyphName;
+  glyph?: "search" | "lock";
   password?: boolean;
   maxLength?: number;
   invalid?: boolean;
   enterKeyHint?: "search" | "done";
   onEnter?: () => void;
+  onClear?: () => void;
   trailing?: ReactNode;
   className?: string;
 }
+
+// Keys, addresses and passwords: the phone keyboard must not capitalise or "correct" them.
+const RAW_INPUT = { autoCapitalize: "off", autoCorrect: "off", spellCheck: false } as const;
 
 export function Field({
   value,
@@ -28,31 +30,41 @@ export function Field({
   invalid,
   enterKeyHint,
   onEnter,
+  onClear,
   trailing,
   className,
 }: FieldProps) {
-  return (
-    <div className={cx(styles.field, invalid && styles.invalid, className)}>
-      {glyph && <Icon glyph={glyph} size={16} color="var(--ts-hint)" />}
-      <input
-        className={styles.input}
-        type={password ? "password" : "text"}
+  const onKeyDown = onEnter && ((event: KeyboardEvent) => event.key === "Enter" && onEnter());
+
+  if (glyph === "search")
+    return (
+      <SearchField
+        {...RAW_INPUT}
+        className={className}
         value={value}
-        placeholder={placeholder}
-        maxLength={maxLength}
+        onChange={onChange}
+        label={placeholder ?? ""}
+        onClear={onClear}
+        invalid={invalid}
         enterKeyHint={enterKeyHint}
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck={false}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={
-          onEnter &&
-          ((event) => {
-            if (event.key === "Enter") onEnter();
-          })
-        }
+        onKeyDown={onKeyDown}
       />
-      {trailing}
-    </div>
+    );
+
+  return (
+    <TextField
+      {...RAW_INPUT}
+      className={className}
+      type={password ? "password" : "text"}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      invalid={invalid}
+      enterKeyHint={enterKeyHint}
+      onKeyDown={onKeyDown}
+      leading={glyph === "lock" && <Lock size={18} color="var(--text-2)" />}
+      trailing={trailing}
+    />
   );
 }

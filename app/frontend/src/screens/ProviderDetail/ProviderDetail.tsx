@@ -1,11 +1,19 @@
+import { EmptyState, FieldGroup, FieldRow, Notice, RankMark, ShortId, StatusCard } from "@myton/ui";
+import {
+  dominantReason,
+  EMPTY,
+  fmt,
+  GRAM,
+  providerStatus,
+  staleSignals,
+  toFriendly,
+  type Telemetry,
+} from "@myton/ui/domain";
+import { locales, providerFields, statusView, type Locale } from "@myton/ui/locale";
 import { BottomBar } from "@/components/BottomBar";
-import { Callout } from "@/components/Callout";
-import { Card } from "@/components/Card";
 import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { CopyRow } from "@/components/CopyRow";
 import { ExplorerAddressRow } from "@/components/ExplorerAddressRow";
-import { FieldRow } from "@/components/FieldRow";
-import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
 import { MetricTile } from "@/components/MetricTile";
 import { NameSheet } from "@/components/NameSheet";
@@ -13,94 +21,62 @@ import { PasswordSheet } from "@/components/PasswordSheet";
 import { ProviderHeader } from "@/components/ProviderHeader";
 import { Screen } from "@/components/Screen";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { SectionHeader } from "@/components/SectionHeader";
-import { StatusDot } from "@/components/StatusDot";
+import { rankInFilters } from "@/data/query";
 import { unsubscribeProvider } from "@/data/sync";
-import type { Provider } from "@/data/types";
 import { useLogin } from "@/hooks/useLogin";
-import { useT } from "@/i18n";
-import type { Dict } from "@/i18n/types";
-import { toUserFriendly } from "@/lib/address";
-import { rankColor, toneColor, toneText } from "@/lib/colors";
-import { cx } from "@/lib/cx";
-import { EMPTY, ago, amount, formatBytes, formatDiskSpeed, formatMbits, formatPing, formatPrice, formatPriceGram, formatSpacePair, formatTime, shorten, uptimeTone } from "@/lib/format";
-import { describeStatus } from "@/lib/status";
+import { useAppliedLang } from "@/i18n";
+import { toneText } from "@/lib/colors";
+import { uptimeTone } from "@/lib/format";
+import { reasonText } from "@/lib/status";
 import { useAuth } from "@/stores/auth";
 import { useCatalog } from "@/stores/catalog";
+import { useCatalogQuery } from "@/stores/catalogQuery";
 import { useNames } from "@/stores/names";
 import { useSubscriptions } from "@/stores/subscriptions";
-import { useEffect, useState } from "react";
+import { Clock, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { type Field, FieldCard } from "./FieldCard";
 import { OwnerPanel } from "./OwnerPanel";
-import styles from "./ProviderDetail.module.css";
 import { TriggerBanners } from "./TriggerBanners";
+import styles from "./ProviderDetail.module.css";
+import list from "@/styles/list.module.css";
 
-function placeOf(p: Provider, t: Dict): string {
-  if (!p.location) return t.unknown;
-  return p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country || t.unknown;
-}
+type Labels = Locale["details"];
 
-function providerFields(p: Provider, t: Dict): Field[] {
+function hardwareFields(tel: Telemetry, labels: Labels, words: Locale["filters"]): Field[] {
   return [
-    { label: t.span, value: `${formatTime(p.minSpan, t)} – ${formatTime(p.maxSpan, t)}` },
-    { label: t.maxBag, value: formatBytes(p.maxBagBytes) },
-    { label: t.workingTime, value: formatTime(p.workingTime, t) },
-    { label: t.lastOnline, value: p.lastOnlineCheckTime === null ? t.unknown : ago(p.staleSec, t) },
-    ...(p.hasTelemetry
-      ? [
-          {
-            label: t.telemetryField,
-            value: p.telemetry.updatedAt === null ? t.unknown : ago(p.telemetryStaleSec, t),
-          },
-        ]
-      : []),
-    { label: t.location, value: placeOf(p, t) },
-    { label: t.uptime, value: `${amount(p.uptime)} %` },
-    { label: t.rating, value: amount(p.rating) },
-    { label: t.price, value: formatPriceGram(p.price) },
+    { label: labels.cpuName, value: fmt.shortText(tel.cpuName), title: tel.cpuName || undefined },
+    { label: labels.cpuCount, value: tel.cpuCount != null ? String(tel.cpuCount) : EMPTY },
+    { label: labels.cpuVirtual, value: tel.cpuVirtual == null ? EMPTY : tel.cpuVirtual ? words.yes : words.no },
+    { label: labels.ram, value: fmt.spacePair(tel.usageRamBytes, tel.totalRamBytes) },
+    { label: labels.space, value: fmt.spacePair(tel.usedSpaceBytes, tel.totalSpaceBytes) },
   ];
 }
 
-function hardwareFields(p: Provider, t: Dict): Field[] {
-  const tel = p.telemetry;
-  const ram =
-    tel.usageRamBytes != null && tel.totalRamBytes != null
-      ? formatSpacePair(tel.usageRamBytes, tel.totalRamBytes)
-      : EMPTY;
-  const space =
-    tel.usedSpaceBytes != null && tel.totalSpaceBytes != null
-      ? formatSpacePair(tel.usedSpaceBytes, tel.totalSpaceBytes)
-      : EMPTY;
+function networkFields(tel: Telemetry, labels: Labels): Field[] {
   return [
-    { label: t.cpuName, value: tel.cpuName ?? EMPTY },
-    { label: t.cpuNumber, value: tel.cpuCount != null ? String(tel.cpuCount) : EMPTY },
-    { label: t.cpuVirtual, value: tel.cpuVirtual == null ? EMPTY : tel.cpuVirtual ? t.yes : t.no },
-    { label: t.ram, value: ram },
-    { label: t.totalSpace, value: space },
-  ];
-}
-
-function networkFields(p: Provider, t: Dict): Field[] {
-  const tel = p.telemetry;
-  return [
-    { label: t.stDownload, value: formatMbits(tel.downloadSpeed) },
-    { label: t.stUpload, value: formatMbits(tel.uploadSpeed) },
-    { label: t.stPing, value: formatPing(tel.ping) },
-    { label: t.country, value: tel.country ?? t.unknown },
-    { label: t.isp, value: tel.isp ?? EMPTY },
+    { label: labels.download, value: fmt.mbits(tel.downloadBits) },
+    { label: labels.upload, value: fmt.mbits(tel.uploadBits) },
+    { label: labels.ping, value: fmt.ping(tel.pingMs) },
+    { label: labels.country, value: tel.country || EMPTY },
+    { label: labels.isp, value: fmt.shortText(tel.isp), title: tel.isp || undefined },
   ];
 }
 
 export function ProviderDetail() {
-  const t = useT();
+  const { t } = useTranslation();
+  const lang = useAppliedLang();
+  const locale = locales[lang];
   const navigate = useNavigate();
   const { pubkey = "" } = useParams();
 
   const providers = useCatalog((s) => s.providers);
-  const ranks = useCatalog((s) => s.ranks);
+  const filters = useCatalogQuery((s) => s.filters);
   const status = useCatalog((s) => s.status);
   const load = useCatalog((s) => s.load);
+  const loadedAt = useCatalog((s) => s.loadedAt);
 
   const loggedIn = useAuth((s) => s.loggedIn);
   const { start: startLogin } = useLogin();
@@ -117,7 +93,8 @@ export function ProviderDetail() {
   }, [load]);
 
   const provider = providers.find((p) => p.pubkey === pubkey);
-  const rank = ranks[pubkey];
+  // The same number as the list row, so the list's filters decide it
+  const rank = useMemo(() => rankInFilters(providers, filters)[pubkey], [providers, filters, pubkey]);
 
   const back = () => navigate(-1);
 
@@ -125,92 +102,93 @@ export function ProviderDetail() {
     // The catalogue lists working providers only, while a contract keeps the key of one
     // that left: name that instead of bouncing the screen back to the home list.
     return (
-      <Screen header={<ScreenHeader title="" onBack={back} />}>
+      <Screen header={<ScreenHeader title={locale.filters.group.provider} onBack={back} />}>
         {status === "ready" && (
           <>
-            <Callout glyph="search" title={t.providerGoneTitle} desc={t.providerGoneDesc} iconColor="var(--ts-hint)" />
-            <Card>
-              <CopyRow label={t.publicKey} copyValue={pubkey}>
-                <span className={cx(styles.mono, styles.monoText)}>{shorten(pubkey, 12)}</span>
+            <EmptyState size="lg" icon={Search} muted title={t("providerGoneTitle")} hint={t("providerGoneDesc")} />
+            <FieldGroup className={list.group}>
+              <CopyRow label={locale.columns.pubkey} copyValue={pubkey} mono>
+                <ShortId value={pubkey} />
               </CopyRow>
-            </Card>
+            </FieldGroup>
           </>
         )}
       </Screen>
     );
   }
 
-  const st = describeStatus(provider, t);
-  const hasTelemetry = provider.hasTelemetry;
+  const st = statusView(providerStatus(provider), lang);
+  const now = Math.floor(loadedAt / 1000);
+  const telemetry = provider.sendsTelemetry ? provider.telemetry : null;
+  const labels = locale.details;
+  const groups = locale.filters.group;
 
-  const checksOpen = isSubscribed && st.problems > 0;
   // A subscription the provider no longer confirms keeps its place in the list: the button
   // offers the new password instead of the way out.
   const denied = deniedFor === pubkey;
-  const subscribeLabel = denied
-    ? t.updatePassword
-    : isSubscribed
-      ? t.unsubscribe
-      : loggedIn
-        ? t.subscribe
-        : t.loginTg;
+  const subscribeLabel = denied ? t("updatePassword") : isSubscribed ? t("unsubscribe") : loggedIn ? t("subscribe") : t("loginTg");
   const onSubscribe = () => {
     if (!loggedIn) return startLogin();
     if (isSubscribed && !denied) return setConfirmOpen(true);
     setPwOpen(true);
   };
 
-  const header = <ProviderHeader pubkey={provider.pubkey} color={toneColor(st.tone)} onBack={back} />;
+  const header = <ProviderHeader pubkey={provider.pubkey} onBack={back} />;
 
   const overview = (
     <>
-      <div className={styles.overviewCard}>
+      <FieldGroup title={groups.provider} className={styles.overviewCard}>
         <FieldRow
-          label={t.nameField}
-          value={
-            <button type="button" aria-label={t.nameEdit} className={styles.nameBtn} onClick={() => setNameOpen(true)}>
-              <span className={name ? styles.nameValue : styles.nameSet}>{name || t.nameSet}</span>
-              <Icon glyph="edit" size={16} color="var(--ts-hint)" />
-            </button>
-          }
+          label={t("nameField")}
+          value={name || t("nameUnset")}
+          valueClassName={name ? undefined : styles.nameUnset}
+          onClick={() => setNameOpen(true)}
         />
-        <CopyRow label={t.publicKey} copyValue={provider.pubkey} divider>
-          <span className={cx(styles.mono, styles.monoText)}>{shorten(provider.pubkey, 12)}</span>
+        <CopyRow label={locale.columns.pubkey} copyValue={provider.pubkey} mono>
+          <ShortId value={provider.pubkey} />
         </CopyRow>
-        <ExplorerAddressRow label={t.address} address={toUserFriendly(provider.address)} divider />
-        {providerFields(provider, t).map((field, index) => (
-          <FieldRow key={index} label={field.label} value={field.value} divider />
+        {provider.address && (
+          <ExplorerAddressRow label={labels.address} address={toFriendly(provider.address) ?? provider.address} />
+        )}
+        {providerFields(provider, now, lang).map((field) => (
+          <FieldRow key={field.id} label={field.label} value={field.value} tone={field.stale ? "red" : undefined} />
         ))}
-      </div>
+      </FieldGroup>
 
-      {hasTelemetry ? (
+      {telemetry ? (
         <>
-          <SectionHeader glyph="cpu" title={t.hardware} />
-          <FieldCard rows={hardwareFields(provider, t)} />
-          <SectionHeader glyph="bars" title={t.benchmarks} />
+          <FieldGroup title={groups.software} className={list.group}>
+            <CopyRow
+              label={labels.storageHash}
+              copyValue={telemetry.storageGitHash}
+              title={telemetry.storageGitHash || undefined}
+              mono
+            >
+              {fmt.shortText(telemetry.storageGitHash)}
+            </CopyRow>
+            <CopyRow
+              label={labels.providerHash}
+              copyValue={telemetry.providerGitHash}
+              title={telemetry.providerGitHash || undefined}
+              mono
+            >
+              {fmt.shortText(telemetry.providerGitHash)}
+            </CopyRow>
+          </FieldGroup>
           <FieldCard
+            title={groups.benchmarks}
             rows={[
-              { label: t.diskRead, value: formatDiskSpeed(provider.telemetry.diskRead) },
-              { label: t.diskWrite, value: formatDiskSpeed(provider.telemetry.diskWrite) },
+              { label: labels.diskRead, value: fmt.diskSpeed(telemetry.diskRead) },
+              { label: labels.diskWrite, value: fmt.diskSpeed(telemetry.diskWrite) },
             ]}
           />
-          <SectionHeader glyph="globe" title={t.network} />
-          <FieldCard rows={networkFields(provider, t)} />
-          <SectionHeader glyph="server" title={t.software} />
-          <Card>
-            <CopyRow label={t.storageHash} copyValue={provider.telemetry.storageGitHash}>
-              <span className={cx(styles.mono, styles.monoText)}>{provider.telemetry.storageGitHash ?? EMPTY}</span>
-            </CopyRow>
-            <CopyRow label={t.providerHash} copyValue={provider.telemetry.providerGitHash} divider>
-              <span className={cx(styles.mono, styles.monoText)}>{provider.telemetry.providerGitHash ?? EMPTY}</span>
-            </CopyRow>
-          </Card>
+          <FieldCard title={groups.hardware} rows={hardwareFields(telemetry, labels, locale.filters)} />
+          <FieldCard title={groups.network} rows={networkFields(telemetry, labels)} />
         </>
       ) : (
-        <div className={styles.noTelemetry}>
-          <Icon glyph="clock" size={16} color="var(--ts-hint)" />
-          <span className={styles.noTelemetryText}>{t.noTelemetry}</span>
-        </div>
+        <Notice tone="gray" icon={Clock} className={list.group}>
+          {t("noTelemetry")}
+        </Notice>
       )}
     </>
   );
@@ -221,76 +199,53 @@ export function ProviderDetail() {
         header={header}
         bottom={
           <BottomBar>
-            <MainButton label={subscribeLabel} tone={isSubscribed && !denied ? "destructive" : "accent"} onClick={onSubscribe} />
+            <MainButton
+              label={subscribeLabel}
+              tone={isSubscribed && !denied ? "destructive" : "accent"}
+              onClick={onSubscribe}
+            />
           </BottomBar>
         }
       >
         <TriggerBanners pubkey={pubkey} />
+        {staleSignals(provider, now).map((signal) => (
+          <Notice key={signal} tone="red" className={list.group}>
+            {locale.stale[signal]}
+          </Notice>
+        ))}
 
-        <div className={styles.statusCard} data-tone={st.tone}>
-          {st.total > 0 && (
-            <div className={styles.health}>
-              <div style={{ flexGrow: Math.max(st.ratio, 0.0001), background: "var(--tone)" }} />
-              <div style={{ flexGrow: Math.max(1 - st.ratio, 0), background: "var(--ts-sepf)" }} />
-            </div>
-          )}
-          <div className={styles.statusBody}>
-            <div className={styles.statusTop}>
-              <div className={styles.statusLabelWrap}>
-                <StatusDot color="var(--tone)" size={9} />
-                <span>{st.label}</span>
-                {st.hasRatio && <span className={styles.statusRatio}>{amount(st.ratio * 100)}%</span>}
-              </div>
-              {st.total > 0 && (
-                <div className={styles.checks}>
-                  <span className={styles.checksLabel}>{t.filesAvail}</span>
-                  <span className={styles.passedBadge} data-tone="green">
-                    {st.passed}
-                  </span>
-                  <span className={styles.slash}>/</span>
-                  <span className={styles.totalBadge}>{st.total}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          {st.desc && (
-            <div
-              className={cx(styles.statusFooter, checksOpen && styles.statusFooterActive)}
-              onClick={
-                checksOpen
-                  ? () => navigate(`/provider/${pubkey}/bags?state=check`)
-                  : undefined
-              }
-            >
-              <span className={styles.statusDesc}>{st.desc}</span>
-              {checksOpen && (
-                <>
-                  <span className={styles.bagsBadge} data-tone="red">
-                    {st.problems}
-                  </span>
-                  <Icon glyph="chevron" size={16} color="var(--ts-hint)" />
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        <StatusCard
+          tone={st.tone}
+          label={st.label}
+          ratio={st.ratio}
+          description={reasonText(dominantReason(provider.reasons), locale)}
+          reasons={provider.reasons}
+          describe={(reason) => reasonText(reason, locale)}
+          className={list.group}
+        />
 
         <div className={styles.tiles}>
           <MetricTile
-            value={amount(provider.rating)}
+            value={fmt.number(provider.rating, 2)}
             label={
               rank ? (
                 <>
-                  {t.rating} <b className={styles.mark} style={{ color: rankColor(rank) }}>{`#${rank}`}</b>
+                  {t("rating")}
+                  <RankMark rank={rank} />
                 </>
               ) : (
-                t.rating
+                t("rating")
               )
             }
-            valueColor="var(--ts-accent)"
+            valueColor="var(--accent)"
           />
-          <MetricTile value={amount(provider.uptime)} unit="%" label={t.uptime} valueColor={toneText(uptimeTone(provider.uptime))} />
-          <MetricTile value={formatPrice(provider.price)} unit="GRAM" label={t.priceUnit} />
+          <MetricTile
+            value={fmt.number(provider.uptime, 2)}
+            unit="%"
+            label={t("uptime")}
+            valueColor={toneText(uptimeTone(provider.uptime ?? 0))}
+          />
+          <MetricTile value={fmt.price(provider.price)} unit={GRAM} label={t("priceUnit")} />
         </div>
 
         {isSubscribed ? (
@@ -306,15 +261,15 @@ export function ProviderDetail() {
         <NameSheet
           kind="provider"
           target={pubkey}
-          subtitle={shorten(provider.pubkey, 14).toUpperCase()}
+          subtitle={<ShortId value={provider.pubkey} />}
           onClose={() => setNameOpen(false)}
         />
       )}
       {confirmOpen && (
         <ConfirmSheet
-          title={t.unsubscribeConfirm}
-          subtitle={name || shorten(provider.pubkey, 14).toUpperCase()}
-          confirmLabel={t.unsubscribe}
+          title={t("unsubscribeConfirm")}
+          subtitle={name || <ShortId value={provider.pubkey} />}
+          confirmLabel={t("unsubscribe")}
           onConfirm={() => unsubscribeProvider(pubkey)}
           onClose={() => setConfirmOpen(false)}
         />

@@ -1,6 +1,7 @@
 import { establishSession } from "@/app/session";
 import { flushAlerts, hydrateFromServer } from "@/data/sync";
 import { invalidateOwner } from "@/hooks/useOwnerData";
+import { initI18n } from "@/i18n";
 import { useCatalog } from "@/stores/catalog";
 import { type Tab, rememberStartTab } from "@/stores/catalogQuery";
 import { getTelegramUser, initTelegram, isInTelegram } from "@/lib/telegram";
@@ -66,6 +67,7 @@ async function runBootSequence(): Promise<void> {
 
 export function bootstrap(): void {
   initTelegram();
+  initI18n();
   registerRevalidation();
   void runBootSequence();
 }

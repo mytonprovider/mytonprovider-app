@@ -1,21 +1,34 @@
-import { CopyButton } from "@/components/CopyButton";
-import { StatusDot } from "@/components/StatusDot";
+import {
+  Badge,
+  CopyButton,
+  cx,
+  FavoriteButton,
+  FreeMark,
+  OpenRow,
+  RankMark,
+  ShareButton,
+  ShortId,
+  skeletonClass,
+  useCompactStatus,
+} from "@myton/ui";
+import { countryLabel, EMPTY, fmt, freeBytes, freePercent, providerStatus, shortKey } from "@myton/ui/domain";
+import { locales, statusView } from "@myton/ui/locale";
+import { Star } from "lucide-react";
 import type { Provider } from "@/data/types";
-import { useT } from "@/i18n";
-import { rankColor, toneText } from "@/lib/colors";
-import { EMPTY, KEY_CHARS, amount, fitKey, formatPrice, formatSpace, formatTime, freeSpaceTone, spaceFreePercent, trimDown } from "@/lib/format";
-import { describeStatus } from "@/lib/status";
-import { useCatalog } from "@/stores/catalog";
+import { useTranslation } from "react-i18next";
+import { useAppliedLang, useTimeWords } from "@/i18n";
+import { BLANK } from "@/lib/skeletons";
 import { useNames } from "@/stores/names";
-import { useKeyChars } from "@/hooks/useKeyChars";
-import { cx } from "@/lib/cx";
 import { type ReactNode, useRef } from "react";
+import { useProviderActions } from "@/hooks/useProviderActions";
 import styles from "./ProviderRow.module.css";
 
 interface ProviderRowProps {
   provider: Provider;
   onOpen: () => void;
-  trailing: ReactNode;
+  alt: boolean;
+  viewed: boolean;
+  rank: number | undefined;
 }
 
 function withUnits(text: string): ReactNode {
@@ -30,25 +43,20 @@ function withUnits(text: string): ReactNode {
   );
 }
 
-function freeSpace(provider: Provider): string {
-  const { totalSpaceBytes, usedSpaceBytes } = provider.telemetry;
-  if (!provider.hasTelemetry || totalSpaceBytes === null || usedSpaceBytes === null) return EMPTY;
-  return formatSpace(Math.max(totalSpaceBytes - usedSpaceBytes, 0));
-}
-
-export function ProviderRow({ provider, onOpen, trailing }: ProviderRowProps) {
-  const t = useT();
+export function ProviderRow({ provider, onOpen, alt, viewed, rank }: ProviderRowProps) {
+  const { t } = useTranslation();
+  const time = useTimeWords();
+  const lang = useAppliedLang();
+  const locale = locales[lang];
+  const columns = locale.columns;
+  const status = statusView(providerStatus(provider), lang);
+  const actions = useProviderActions(provider.pubkey);
   const headRef = useRef<HTMLDivElement>(null);
-  const pkRef = useRef<HTMLSpanElement>(null);
-  const keyChars = useKeyChars(headRef, pkRef, KEY_CHARS);
-  const status = describeStatus(provider, t);
-  const rank = useCatalog((s) => s.ranks[provider.pubkey]);
+  const compact = useCompactStatus(headRef);
   const name = useNames((s) => s.providers[provider.pubkey]);
-  const freePercent = provider.hasTelemetry
-    ? spaceFreePercent(provider.telemetry.totalSpaceBytes, provider.telemetry.usedSpaceBytes)
-    : null;
-  const place = provider.location?.country || provider.location?.countryIso || EMPTY;
-  const working = provider.workingTime > 0 ? formatTime(provider.workingTime, t, true) : EMPTY;
+  const free = freePercent(provider);
+  const place = countryLabel(provider.location) ?? EMPTY;
+  const working = (provider.workingTime ?? 0) > 0 ? fmt.duration(provider.workingTime, time.duration, 2) : EMPTY;
 
   const cell = (label: ReactNode, value: ReactNode) => (
     <span className={styles.cell}>
@@ -58,73 +66,80 @@ export function ProviderRow({ provider, onOpen, trailing }: ProviderRowProps) {
   );
 
   return (
-    <div className={styles.row} onClick={onOpen}>
+    <OpenRow
+      onOpen={onOpen}
+      label={`${t("providerDetails")} ${name || shortKey(provider.pubkey)}`}
+      viewed={viewed}
+      data-alt={alt || undefined}
+      className={styles.row}
+    >
       <div ref={headRef} className={styles.head}>
-        {trailing}
-        {name ? (
-          <span className={styles.name}>{name}</span>
-        ) : (
-          <span ref={pkRef} className={styles.pk}>
-            {fitKey(provider.pubkey, keyChars).toUpperCase()}
-          </span>
-        )}
-        <CopyButton value={provider.pubkey} />
-        <span className={styles.status} data-tone={status.tone}>
-          <StatusDot color="var(--tone)" size={7} />
+        <FavoriteButton size="sm" {...actions.favorite} />
+        {name ? <span className={styles.name}>{name}</span> : <ShortId value={provider.pubkey} className={styles.pk} />}
+        <CopyButton {...actions.copy} />
+        <Badge tone={status.tone} dot compact={compact} reserve={Object.values(locale.status)} className={styles.status}>
           {status.label}
-          {status.hasRatio && <span className={styles.ratio}>{trimDown(status.ratio * 100, 0)}%</span>}
-        </span>
+        </Badge>
+        {actions.share && <ShareButton size="sm" {...actions.share} />}
       </div>
       <div className={styles.cells}>
         {cell(
           rank ? (
             <>
-              {t.rating} <b className={styles.mark} style={{ color: rankColor(rank) }}>{`#${rank}`}</b>
+              {columns.rating}
+              <RankMark rank={rank} />
             </>
           ) : (
-            t.rating
+            columns.rating
           ),
-          amount(provider.rating),
+          <>
+            <Star className={styles.star} aria-hidden="true" />
+            {fmt.number(provider.rating, 2)}
+          </>,
         )}
-        {cell(t.uptime, `${amount(provider.uptime)}%`)}
-        {cell(t.price, withUnits(`${formatPrice(provider.price)} GRAM`))}
+        {cell(columns.uptime, fmt.percent(provider.uptime))}
+        {cell(columns.price, withUnits(fmt.tonLabel(provider.price)))}
         {cell(
-          freePercent === null ? (
-            t.freeLabel
+          free === null ? (
+            columns.freeSpace
           ) : (
             <>
-              {t.freeLabel}{" "}
-              <b className={styles.mark} style={{ color: toneText(freeSpaceTone(freePercent)) }}>
-                {`${Math.round(freePercent)}%`}
-              </b>
+              {columns.freeSpace}
+              <FreeMark percent={free} />
             </>
           ),
-          withUnits(freeSpace(provider)),
+          withUnits(fmt.space(freeBytes(provider))),
         )}
-        {cell(t.workingTime, withUnits(working))}
-        {cell(t.location, place)}
+        {cell(columns.workingTime, working)}
+        {cell(columns.location, place)}
       </div>
-    </div>
+    </OpenRow>
   );
 }
 
 const CELL_COUNT = 6;
-// The spans need content to have a line box at all, and it must not be readable.
-const BLANK = "\u00a0";
 
-export function ProviderRowPlaceholder() {
+export function ProviderRowPlaceholder({ alt }: { alt: boolean }) {
+  const locale = locales[useAppliedLang()];
   return (
-    <div className={styles.placeholder}>
+    <div className={styles.placeholder} data-alt={alt || undefined}>
       <div className={styles.head}>
-        <span className={styles.shapeToggle} />
-        <span className={cx(styles.pk, styles.shapeKey)}>{BLANK}</span>
-        <span className={cx(styles.status, styles.shape)}>{BLANK}</span>
+        <span className={skeletonClass(styles.shapeToggle)} />
+        <span className={skeletonClass(cx(styles.pk, styles.shapeKey))}>{BLANK}</span>
+        <Badge
+          tone="gray"
+          dot
+          reserve={Object.values(locale.status)}
+          className={skeletonClass(cx(styles.status, styles.shapeStatus))}
+        >
+          {BLANK}
+        </Badge>
       </div>
       <div className={styles.cells}>
         {Array.from({ length: CELL_COUNT }, (_, cell) => (
           <span key={cell} className={styles.cell}>
-            <span className={cx(styles.cellLabel, styles.shapeLabel)}>{BLANK}</span>
-            <span className={cx(styles.cellValue, styles.shapeValue)}>{BLANK}</span>
+            <span className={skeletonClass(cx(styles.cellLabel, styles.shapeLabel))}>{BLANK}</span>
+            <span className={skeletonClass(cx(styles.cellValue, styles.shapeValue))}>{BLANK}</span>
           </span>
         ))}
       </div>

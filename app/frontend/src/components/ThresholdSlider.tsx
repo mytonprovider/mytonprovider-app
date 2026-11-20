@@ -1,29 +1,31 @@
+import { Range } from "@myton/ui";
 import { THRESHOLD_MAX, THRESHOLD_MIN } from "@/data/alerts";
-import { useSliderDrag } from "@/hooks/useSliderDrag";
-import { useRef } from "react";
 import styles from "./ThresholdSlider.module.css";
 
-const RANGE = THRESHOLD_MAX - THRESHOLD_MIN;
-
 interface ThresholdSliderProps {
+  label: string;
   value: number;
+  disabled?: boolean;
   onChange: (value: number) => void;
 }
 
-export function ThresholdSlider({ value, onChange }: ThresholdSliderProps) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const pct = ((value - THRESHOLD_MIN) / RANGE) * 100;
-  const onDown = useSliderDrag(trackRef, (ratio) => onChange(Math.round(THRESHOLD_MIN + ratio * RANGE)));
-
+export function ThresholdSlider({ label, value, disabled, onChange }: ThresholdSliderProps) {
+  const text = `≥ ${value}%`;
   return (
     <div className={styles.row}>
-      <div className={styles.area}>
-        <div className={styles.track} ref={trackRef} data-no-drag>
-          <div className={styles.fill} style={{ width: `${pct}%` }} />
-          <div className={styles.thumb} style={{ left: `${pct}%` }} onPointerDown={onDown} />
-        </div>
+      <div className={styles.area} data-no-drag>
+        <Range
+          label={label}
+          valueText={text}
+          min={THRESHOLD_MIN}
+          max={THRESHOLD_MAX}
+          step={1}
+          value={value}
+          disabled={disabled}
+          onChange={onChange}
+        />
       </div>
-      <span className={styles.value}>≥ {value}%</span>
+      <span className={styles.value}>{text}</span>
     </div>
   );
 }

@@ -72,13 +72,14 @@ on the domain registered with the bot.
 | `MYTONPROVIDER_API_KEY` | mytonprovider API key                             | `qweRTY`                  |
 | `MYTONPROVIDER_API_RPS` | mytonprovider rate limit, requests per second     | `10`                      |
 
-The frontend reads three more variables, inlined by Vite at build time rather than read from the runtime `.env`:
+The frontend reads four more variables, inlined by Vite at build time rather than read from the runtime `.env`:
 
 | Variable            | Description                                                  | Default                     |
 |---------------------|--------------------------------------------------------------|-----------------------------|
 | `VITE_API_BASE`     | Public catalog API                                           | `https://mytonprovider.org` |
 | `VITE_BACKEND_BASE` | Origin of this backend; one process serves app and API       | same origin                 |
 | `VITE_TG_CLIENT_ID` | Login Widget client ID; Compose bakes it from `TG_CLIENT_ID` | empty                       |
+| `VITE_BOT_USERNAME` | Bot of the share links; Compose bakes it from `BOT_USERNAME` | empty, no share button      |
 
 ## License
 

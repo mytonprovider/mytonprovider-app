@@ -1,9 +1,9 @@
+import type { Explorer } from "@myton/ui/domain";
 import type { Lang } from "@/i18n/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type Theme = "dark" | "light";
-export type Explorer = "tonviewer" | "tonscan";
 
 interface SettingsState {
   theme: Theme;

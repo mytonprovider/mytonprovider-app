@@ -1,39 +1,26 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 22px;
-  padding-top: 2px;
+  gap: var(--space-7);
+  padding-top: var(--space-0);
 }
 
+/* The rows are spaced for a 24px slot; the package track inside it is 18px. */
 .area {
-  position: relative;
   flex: 1;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  margin-left: 4px;
-}
-
-.track {
-  composes: track from "./slider.module.css";
-}
-
-.fill {
-  composes: fill from "./slider.module.css";
-  left: 0;
-}
-
-.thumb {
-  composes: thumb from "./slider.module.css";
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  height: var(--control-xs);
 }
 
 .value {
   flex: none;
-  min-width: 42px;
+  min-width: var(--control-md);
   text-align: right;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ts-accent);
+  font-size: var(--font-xs);
+  font-weight: var(--w-value);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

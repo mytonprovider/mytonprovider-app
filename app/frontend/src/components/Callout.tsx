@@ -1,30 +1,29 @@
-import { Icon } from "@/components/Icon/Icon";
-import type { GlyphName } from "@/components/Icon/glyphs";
-import { cx } from "@/lib/cx";
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import styles from "./Callout.module.css";
 
 interface CalloutProps {
-  hero?: boolean;
-  glyph?: GlyphName;
-  icon?: ReactNode;
-  iconColor?: string;
+  icon?: LucideIcon;
+  leading?: ReactNode;
   title?: string;
   desc?: ReactNode;
   children?: ReactNode;
 }
 
-export function Callout({ hero, glyph, icon, iconColor = "var(--ts-accent)", title, desc, children }: CalloutProps) {
-  const disc = hero && !icon;
-  const mark = icon ?? (glyph ? <Icon glyph={glyph} size={disc ? 19 : 42} color={disc ? "#fff" : iconColor} filled={disc} /> : null);
+export function Callout({ icon: Mark, leading, title, desc, children }: CalloutProps) {
+  // The colour comes from the disc's own CSS, not lucide's color prop: that prop paints only the stroke, and a filled
+  // star or bell then took the text colour for its fill.
+  const mark =
+    leading ??
+    (Mark ? (
+      <span className={styles.disc}>
+        <Mark size={19} fill="currentColor" />
+      </span>
+    ) : null);
 
   return (
-    <div className={cx(styles.root, hero && styles.hero)}>
-      {mark ? (
-        <span className={cx(styles.mark, disc && styles.disc)} style={disc ? { background: iconColor } : undefined}>
-          {mark}
-        </span>
-      ) : null}
+    <div className={styles.root}>
+      {mark ? <span className={styles.mark}>{mark}</span> : null}
       {title ? <div className={styles.title}>{title}</div> : null}
       {desc ? <div className={styles.desc}>{desc}</div> : null}
       {children ? <div className={styles.action}>{children}</div> : null}

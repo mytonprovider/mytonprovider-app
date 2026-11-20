@@ -1,18 +1,23 @@
+import { Card, cx } from "@myton/ui";
 import { ProviderRow, ProviderRowPlaceholder } from "@/components/ProviderRow";
 import type { Provider } from "@/data/types";
 import { useRowWindow } from "@/hooks/useRowWindow";
+import { BLANK } from "@/lib/skeletons";
 import { type ReactNode, useRef } from "react";
 import styles from "./Home.module.css";
 
 interface ProviderPaneProps {
   hero?: ReactNode;
   toolbar?: ReactNode;
-  count: string | null;
+  // Left out where the list ends with its own count, as the paged catalogue does
+  count?: string | null;
   loading: boolean;
   skeletonCount: number;
   rows: Provider[];
-  trailing: (provider: Provider) => ReactNode;
+  ranks: Record<string, number>;
   fallback?: ReactNode;
+  more?: ReactNode;
+  viewed: string | null;
   onOpen: (pubkey: string) => void;
 }
 
@@ -23,36 +28,45 @@ export function ProviderPane({
   loading,
   skeletonCount,
   rows,
-  trailing,
+  ranks,
   fallback,
+  more,
+  viewed,
   onOpen,
 }: ProviderPaneProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const { start, end, padTop, padBottom } = useRowWindow(listRef, rows.length);
+  // With no count line above it the card keeps the step the count line made
+  const listClass = cx(styles.list, count === undefined && styles.listUncounted);
 
   return (
     <>
       {hero}
       {toolbar}
-      {(count !== null || loading) && <div className={styles.count}>{count || " "}</div>}
+      {count !== undefined && (count !== null || loading) && <div className={styles.count}>{count || BLANK}</div>}
 
       {loading ? (
-        <div className={styles.list}>
+        <Card striped className={listClass}>
           {Array.from({ length: skeletonCount }, (_, index) => (
-            <ProviderRowPlaceholder key={index} />
+            <ProviderRowPlaceholder key={index} alt={index % 2 === 1} />
           ))}
-        </div>
+        </Card>
       ) : rows.length > 0 ? (
-        <div ref={listRef} className={styles.list} style={{ paddingTop: padTop, paddingBottom: padBottom }}>
-          {rows.slice(start, end).map((provider) => (
-            <ProviderRow
-              key={provider.pubkey}
-              provider={provider}
-              onOpen={() => onOpen(provider.pubkey)}
-              trailing={trailing(provider)}
-            />
-          ))}
-        </div>
+        <>
+          <Card striped ref={listRef} className={listClass} style={{ paddingTop: padTop, paddingBottom: padBottom }}>
+            {rows.slice(start, end).map((provider, index) => (
+              <ProviderRow
+                key={provider.pubkey}
+                provider={provider}
+                onOpen={() => onOpen(provider.pubkey)}
+                alt={(start + index) % 2 === 1}
+                viewed={provider.pubkey === viewed}
+                rank={ranks[provider.pubkey]}
+              />
+            ))}
+          </Card>
+          {more}
+        </>
       ) : (
         <div className={styles.fallback}>{fallback}</div>
       )}

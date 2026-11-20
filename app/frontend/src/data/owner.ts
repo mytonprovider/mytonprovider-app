@@ -1,6 +1,6 @@
 import type { TriggerKey } from "@/i18n/types";
 import { ACCENT, SC } from "@/lib/colors";
-import { EMPTY, NANO, amount, formatBytes, formatPriceGram, formatSpace, spacePair } from "@/lib/format";
+import { EMPTY, fmt, spacePair } from "@myton/ui/domain";
 import { defaultThreshold, type ThresholdMap } from "./alerts";
 import type { OwnerChartPoint, OwnerPayload, OwnerSummary, OwnerTriggerEntry } from "./backend";
 import type { Provider } from "./types";
@@ -84,20 +84,20 @@ export function ownerTriggers(entries: OwnerTriggerEntry[]): OwnerTrigger[] {
 const GAUGE_KEYS: GaugeKey[] = ["cpu_high", "ram_high", "disk_load_high", "network_high"];
 
 function formatGram(nano: number | null): string {
-  return nano != null ? formatPriceGram(nano) : EMPTY;
+  return nano != null ? fmt.tonLabel(nano) : EMPTY;
 }
 
 function formatGrowth(bytes: number | null): string {
   if (bytes == null) return EMPTY;
-  return `${bytes >= 0 ? "+" : "-"}${formatSpace(Math.abs(bytes))}`;
+  return `${bytes >= 0 ? "+" : "-"}${fmt.space(Math.abs(bytes))}`;
 }
 
 function summaryBlock(summary: OwnerSummary) {
   return {
     earned: formatGram(summary.earned),
     bagsAdded: `+${summary.bags_added}`,
-    trafficIn: formatBytes(summary.traffic_in),
-    trafficOut: formatBytes(summary.traffic_out),
+    trafficIn: fmt.bytes(summary.traffic_in),
+    trafficOut: fmt.bytes(summary.traffic_out),
     storageGrowth: formatGrowth(summary.storage_growth_bytes),
   };
 }
@@ -141,8 +141,8 @@ function threshold(thresholds: ThresholdMap, key: GaugeKey): number {
 }
 
 export function adaptOwner(p: Provider, payload: OwnerPayload, thresholds: ThresholdMap): OwnerData {
-  const usedBytes = p.telemetry.usedSpaceBytes ?? 0;
-  const totalBytes = p.telemetry.totalSpaceBytes ?? 0;
+  const usedBytes = p.telemetry?.usedSpaceBytes ?? 0;
+  const totalBytes = p.telemetry?.totalSpaceBytes ?? 0;
   const usedPct = totalBytes > 0 ? Math.min(100, (usedBytes / totalBytes) * 100) : 0;
   const usedPctRound = Math.round(usedPct);
   const pair = spacePair(usedBytes, totalBytes);
@@ -156,10 +156,10 @@ export function adaptOwner(p: Provider, payload: OwnerPayload, thresholds: Thres
       : null;
 
   return {
-    balance: payload.balance != null ? amount(payload.balance / NANO) : EMPTY,
+    balance: fmt.ton(payload.balance),
     balanceUpdatedAt: payload.balance_updated_at,
-    income: amount(payload.income / NANO),
-    incomeMax: payload.income_max != null ? amount(payload.income_max / NANO) : null,
+    income: fmt.ton(payload.income),
+    incomeMax: payload.income_max != null ? fmt.ton(payload.income_max) : null,
     usedSpace: pair?.used ?? EMPTY,
     totalSpace: pair?.total ?? EMPTY,
     spaceUnit: pair?.unit ?? "",
@@ -171,12 +171,12 @@ export function adaptOwner(p: Provider, payload: OwnerPayload, thresholds: Thres
     monthly: {
       earned: formatGram(payload.monthly.earned),
       space: formatGrowth(payload.monthly.storage_growth_bytes),
-      traffic: formatBytes(monthlyTraffic),
+      traffic: fmt.bytes(monthlyTraffic),
     },
     allTime: {
       earned: formatGram(payload.all_time.earned),
-      space: formatSpace(payload.all_time.stored_bytes),
-      traffic: formatBytes(payload.all_time.traffic),
+      space: fmt.space(payload.all_time.stored_bytes),
+      traffic: fmt.bytes(payload.all_time.traffic),
     },
     gauges: GAUGE_KEYS.map((key) => ({
       key,
