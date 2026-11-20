@@ -1,5 +1,17 @@
+import { startAppLink } from "@myton/ui";
 import { init } from "@/init";
-import { backButton, hapticFeedback, initData, miniApp, openLink, postEvent, retrieveLaunchParams, retrieveRawInitData, settingsButton } from "@tma.js/sdk-react";
+import {
+  backButton,
+  hapticFeedback,
+  initData,
+  miniApp,
+  openLink,
+  postEvent,
+  retrieveLaunchParams,
+  retrieveRawInitData,
+  settingsButton,
+  shareURL,
+} from "@tma.js/sdk-react";
 
 interface TelegramUser {
   id: number;
@@ -17,6 +29,8 @@ type SetupMethod = "web_app_setup_back_button" | "web_app_setup_settings_button"
 interface TelegramButton {
   onClick: (listener: VoidFunction) => VoidFunction;
 }
+
+const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME ?? "";
 
 let insideTelegram = false;
 let launchStartParam = "";
@@ -140,6 +154,23 @@ export function openExternal(url: string): void {
     } catch {}
   }
   window.open(url, "_blank", "noopener");
+}
+
+// The bot's own deep link, the one its messages carry (render.provider_url); unset in a build, there is nothing to share.
+export function providerLink(pubkey: string): string | null {
+  return BOT_USERNAME ? startAppLink(BOT_USERNAME, pubkey) : null;
+}
+
+// Inside Telegram the link goes to its chat picker; elsewhere the caller falls back to the browser's share or a copy.
+export function shareInTelegram(url: string): boolean {
+  if (!isInTelegram()) return false;
+  try {
+    if (shareURL.isAvailable()) {
+      shareURL(url);
+      return true;
+    }
+  } catch {}
+  return false;
 }
 
 export function tick(): void {

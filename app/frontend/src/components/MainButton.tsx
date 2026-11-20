@@ -1,5 +1,5 @@
-import { Icon } from "@/components/Icon/Icon";
-import { cx } from "@/lib/cx";
+import { Check } from "lucide-react";
+import { buttonClass, cx } from "@myton/ui";
 import styles from "./MainButton.module.css";
 
 type MainButtonTone = "accent" | "destructive";
@@ -24,12 +24,9 @@ export function MainButton({
   const idleDisabled = disabled && !busy;
   const clickable = !idleDisabled && !busy;
 
-  const className = cx(
-    styles.button,
-    state === "success" && styles.success,
-    idleDisabled && styles.disabled,
-    !idleDisabled && state !== "success" && tone === "destructive" && styles.destructive,
-    !clickable && styles.static,
+  const className = buttonClass(
+    { variant: tone === "destructive" ? "danger" : "primary", size: "xl", block: true },
+    cx(state === "success" && styles.success, busy && styles.busy),
   );
 
   return (
@@ -40,7 +37,7 @@ export function MainButton({
       disabled={idleDisabled}
     >
       {state === "loading" && <span className={styles.spinner} />}
-      {state === "success" && <Icon glyph="check" size={20} color="#fff" />}
+      {state === "success" && <Check size={20} color="var(--btn-ink)" />}
       {state === "idle" && <span>{label}</span>}
     </button>
   );

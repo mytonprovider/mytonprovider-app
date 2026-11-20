@@ -9,83 +9,40 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 8px;
-  padding-block: 8px 10px;
-  padding-inline: max(10px, var(--ts-column));
-  background: var(--ts-navbg);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  gap: var(--space-3);
+  padding-block: var(--space-3) var(--space-4);
+  padding-inline: max(var(--space-4), var(--ts-column));
+  background: var(--dock-bar);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
 }
 
 .navActions {
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-
-.headerBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: none;
-  border: none;
-  border-radius: 9px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-
-.searchClear {
-  composes: clear from "../../styles/list.module.css";
+  gap: var(--space-0);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 12px;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
 }
 
+/* Centred like the phone layout; on the 720px column of Telegram's desktop app a half-width pill reads as an empty
+   field. The look is the package's secondary button. */
 .toolbarBtn {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 13px 10px;
-  background: var(--ts-card);
-  border: none;
-  border-radius: var(--ts-radius-field);
-  color: var(--ts-text);
-  font-size: 14.5px;
-  font-weight: 500;
-  font-family: inherit;
-  white-space: nowrap;
+  max-width: 200px;
   overflow: hidden;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.15s ease;
 }
 
-.toolbarBtn:active {
-  transform: scale(0.97);
-}
-
-.sortChevron {
-  composes: chevron from "../../styles/list.module.css";
-}
-
-.sortChevronUp {
-  composes: chevronUp from "../../styles/list.module.css";
-}
-
-.filterDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ts-accent);
+.toolbarIcon {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
 .count {
@@ -96,34 +53,25 @@
   composes: list from "../../styles/list.module.css";
 }
 
+.listUncounted {
+  composes: group from "../../styles/list.module.css";
+}
+
 .fab {
   position: absolute;
-  right: max(16px, calc(var(--ts-column) + 16px));
-  bottom: calc(86px + var(--ts-safe-bottom));
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: var(--ts-accent);
-  cursor: pointer;
-  z-index: 20;
+  right: max(var(--space-6), calc(var(--ts-column) + var(--space-6)));
+  bottom: calc(var(--dock-space) + var(--space-5));
+  z-index: var(--layer-float);
   opacity: 0;
   transform: translateY(8px) scale(0.9);
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 
 .fabVisible {
   opacity: 1;
   transform: none;
   pointer-events: auto;
-}
-
-.calloutBtn {
-  composes: button from "../../components/Callout.module.css";
 }
 
 .fallback {

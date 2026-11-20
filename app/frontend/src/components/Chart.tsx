@@ -1,10 +1,12 @@
-import { cx } from "@/lib/cx";
+import { cx, skeletonClass } from "@myton/ui";
+import { SC } from "@/lib/colors";
 import { tick } from "@/lib/telegram";
 import { type PointerEvent as ReactPointerEvent, useId, useRef, useState } from "react";
 import styles from "./Chart.module.css";
 
 const WIDTH = 300;
 const HEIGHT = 64;
+const DRAWN_HEIGHT = 60;
 const PAD = 4;
 const TWO_DAYS_SEC = 172800;
 const BRIDGE_SEC = 300;
@@ -46,9 +48,9 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
       <div className={styles.chart}>
         <div className={styles.head}>
           <span className={styles.label}>{label}</span>
-          <span className={styles.skelValue} />
+          <span className={skeletonClass(styles.shapeValue)} />
         </div>
-        <div className={styles.skelBody} />
+        <div className={skeletonClass()} style={{ height: DRAWN_HEIGHT }} />
       </div>
     );
   }
@@ -134,7 +136,13 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
         onPointerUp={endScrub}
         onPointerCancel={endScrub}
       >
-        <svg width="100%" height={60} viewBox="0 0 300 64" preserveAspectRatio="none" className={styles.svg}>
+        <svg
+          width="100%"
+          height={DRAWN_HEIGHT}
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          preserveAspectRatio="none"
+          className={styles.svg}
+        >
           {threshold != null && (
             <defs>
               <clipPath id={`${clipId}-below`}>
@@ -145,17 +153,17 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
               </clipPath>
             </defs>
           )}
-          <path d={peakPath} fill="rgba(0, 152, 234, 0.28)" />
-          <path d={areaPath} fill="rgba(0, 152, 234, 0.1)" />
+          <path d={peakPath} fill="color-mix(in srgb, var(--accent) 28%, transparent)" />
+          <path d={areaPath} fill="color-mix(in srgb, var(--accent) 10%, transparent)" />
           {thresholdLine && (
-            <path d={thresholdLine} fill="none" stroke="#ff3b30" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+            <path d={thresholdLine} fill="none" stroke={SC.red} strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
           )}
           {bridges.map(([from, to]) => (
             <path
               key={from}
               d={`M${at(from)} L${at(to)}`}
               fill="none"
-              stroke="var(--ts-hint)"
+              stroke="var(--text-2)"
               strokeWidth={1.6}
               strokeDasharray="3 3"
               opacity={0.8}
@@ -166,7 +174,7 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
               key={run[0]}
               points={run.map(at).join(" ")}
               fill="none"
-              stroke="var(--ts-accent)"
+              stroke="var(--accent)"
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -179,7 +187,7 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
                 key={`over-${run[0]}`}
                 points={run.map(at).join(" ")}
                 fill="none"
-                stroke="#ff3b30"
+                stroke={SC.red}
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -187,22 +195,22 @@ export function Chart({ values, peaks, times, threshold, unit, label, current, l
               />
             ))}
           {dots.map((index) => (
-            <circle key={index} cx={x(index)} cy={y(value(index))} r={1.7} fill="var(--ts-accent)" />
+            <circle key={index} cx={x(index)} cy={y(value(index))} r={1.7} fill="var(--accent)" />
           ))}
           {scrub === null && (
-            <circle cx={x(last)} cy={y(value(last))} r={3} fill="var(--ts-accent)" stroke="var(--ts-card)" strokeWidth={1.5} />
+            <circle cx={x(last)} cy={y(value(last))} r={3} fill="var(--accent)" stroke="var(--surface)" strokeWidth={1.5} />
           )}
           {scrub !== null && (
             <g>
-              <line x1={x(scrub)} x2={x(scrub)} y1={0} y2={HEIGHT} stroke="var(--ts-hint)" strokeWidth={1} opacity={0.6} />
-              <circle cx={x(scrub)} cy={y(value(scrub))} r={3.5} fill="var(--ts-accent)" stroke="var(--ts-card)" strokeWidth={1.5} />
+              <line x1={x(scrub)} x2={x(scrub)} y1={0} y2={HEIGHT} stroke="var(--text-2)" strokeWidth={1} opacity={0.6} />
+              <circle cx={x(scrub)} cy={y(value(scrub))} r={3.5} fill="var(--accent)" stroke="var(--surface)" strokeWidth={1.5} />
             </g>
           )}
         </svg>
         {threshold != null && (
           <span
             className={cx(styles.thresholdLabel, thresholdY <= 14 && styles.thresholdLabelBelow)}
-            style={{ top: `${(thresholdY / HEIGHT) * 100}%` }}
+            style={{ top: `${(thresholdY / HEIGHT) * 100}%`, color: SC.red }}
           >
             {`${threshold}${unit}`}
           </span>

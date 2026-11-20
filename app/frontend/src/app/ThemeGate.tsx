@@ -1,11 +1,12 @@
 import { useAppliedTheme } from "@/hooks/useTheme";
+import type { Theme } from "@/stores/settings";
 import { isInTelegram } from "@/lib/telegram";
 import { miniApp } from "@tma.js/sdk-react";
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 
 function paintTelegramBands(): void {
   if (!isInTelegram()) return;
-  const color = getComputedStyle(document.documentElement).getPropertyValue("--ts-bg").trim();
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
   if (!color.startsWith("#")) return;
   try {
     miniApp.setBgColor.ifAvailable(color);
@@ -16,17 +17,20 @@ function paintTelegramBands(): void {
 
 export function ThemeGate({ children }: { children: ReactNode }) {
   const theme = useAppliedTheme();
-  const painted = useRef(false);
+  // The theme on the page rather than a first-paint flag: StrictMode runs the effect twice, and a flag would crossfade
+  // the theme into itself, a transition the profile's theme then cuts short.
+  const applied = useRef<Theme | null>(null);
 
   useLayoutEffect(() => {
+    if (applied.current === theme) return;
     const apply = () => {
       document.documentElement.dataset.theme = theme;
       paintTelegramBands();
     };
     const start = document.startViewTransition?.bind(document);
-    if (painted.current && start) start(apply);
+    if (applied.current !== null && start) start(apply);
     else apply();
-    painted.current = true;
+    applied.current = theme;
   }, [theme]);
 
   return <>{children}</>;

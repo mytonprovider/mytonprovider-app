@@ -1,17 +1,26 @@
+import { ArrowDown, ArrowUp, Bell, Menu, SlidersHorizontal, Star } from "lucide-react";
+import {
+  Button,
+  cx,
+  glyphClass,
+  IconButton,
+  ProviderIcon,
+  reducedMotion,
+  ShowMore,
+  TabDock,
+  useUi,
+} from "@myton/ui";
 import { Callout } from "@/components/Callout";
 import { Field } from "@/components/Field";
-import { FloatingTabs } from "@/components/FloatingTabs";
-import { Icon } from "@/components/Icon/Icon";
-import { RoundToggle } from "@/components/RoundToggle";
 import { TabPager } from "@/components/TabPager";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
-import { EMPTY_FILTERS, countActiveFilters, selectCatalog } from "@/data/query";
-import { hydrateFromServer, toggleFavorite } from "@/data/sync";
-import type { Provider } from "@/data/types";
+import { rankInFilters, selectCatalog } from "@/data/query";
+import { hydrateFromServer } from "@/data/sync";
 import type { ReactNode } from "react";
-import { useT } from "@/i18n";
-import { cx } from "@/lib/cx";
-import { reducedMotion } from "@/lib/motion";
+import { useTranslation } from "react-i18next";
+import { useAppliedLang } from "@/i18n";
+import { isStart, PAGE_SIZE } from "@myton/ui/domain";
+import { locales } from "@myton/ui/locale";
 import { COLD_ROWS } from "@/lib/skeletons";
 import { notify } from "@/lib/telegram";
 import { useAuth } from "@/stores/auth";
@@ -28,13 +37,15 @@ import { TonLogo } from "./TonLogo";
 
 const SCROLL_TOP_THRESHOLD = 360;
 const TABS = ["subs", "list", "fav"] as const;
+const SECTIONS = "home";
 
 export function Home() {
-  const t = useT();
+  const { t } = useTranslation();
+  const locale = locales[useAppliedLang()];
+  const { labels } = useUi();
   const navigate = useNavigate();
 
   const providers = useCatalog((s) => s.providers);
-  const bounds = useCatalog((s) => s.bounds);
   const status = useCatalog((s) => s.status);
   const errorStatus = useCatalog((s) => s.errorStatus);
   const load = useCatalog((s) => s.load);
@@ -67,20 +78,24 @@ export function Home() {
   }, [tab]);
 
   const listItems = useMemo(
-    () => selectCatalog(providers, { only: null, search, filters, sort, names, bounds }),
-    [providers, search, filters, sort, names, bounds],
+    () => selectCatalog(providers, { only: null, search, filters, sort, names }),
+    [providers, search, filters, sort, names],
   );
   // Hand-picked tabs ignore the catalogue filters: they would hide the provider somebody came for.
   const favItems = useMemo(
-    () => selectCatalog(providers, { only: favorites, search, filters: EMPTY_FILTERS, sort, names, bounds }),
-    [providers, favorites, search, sort, names, bounds],
+    () => selectCatalog(providers, { only: favorites, search, filters: {}, sort, names }),
+    [providers, favorites, search, sort, names],
   );
   const subItems = useMemo(
-    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters: EMPTY_FILTERS, sort, names, bounds }) : []),
-    [loggedIn, providers, subscribed, search, sort, names, bounds],
+    () => (loggedIn ? selectCatalog(providers, { only: subscribed, search, filters: {}, sort, names }) : []),
+    [loggedIn, providers, subscribed, search, sort, names],
   );
 
-  const activeFilters = countActiveFilters(filters);
+  const ranks = useMemo(() => rankInFilters(providers, filters), [providers, filters]);
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const listRows = useMemo(() => listItems.slice(0, limit), [listItems, limit]);
+
+  const filtersTouched = !isStart(filters);
   // Skeletons only while there is nothing to show: a refresh runs through the same "loading"
   // status, and a screenful of placeholders over a scrolled list threw it back, 6000px to 547px.
   const loading = status !== "ready" && status !== "error" && providers.length === 0;
@@ -108,41 +123,38 @@ export function Home() {
     setShowTop(false);
   };
 
-  const openProvider = (pubkey: string) => navigate(`/provider/${pubkey}`);
+  // The provider opened last keeps its row marked once its sheet closes, as on the sites.
+  const [viewed, setViewed] = useState<string | null>(null);
+  const openProvider = (pubkey: string) => {
+    setViewed(pubkey);
+    navigate(`/provider/${pubkey}`);
+  };
 
-  const starToggle = (provider: Provider) => (
-    <RoundToggle
-      glyph="star"
-      size={18}
-      active={favorites.includes(provider.pubkey)}
-      ariaLabel={t.fav}
-      onClick={(event) => {
-        event.stopPropagation();
-        toggleFavorite(provider.pubkey);
-      }}
-    />
-  );
+  const listHero = <Callout leading={<TonLogo />} title={t("mainTitle")} desc={t("mainDesc")} />;
 
-  const listHero = <Callout hero icon={<TonLogo />} title={t.mainTitle} desc={t.mainDesc} />;
+  const subsHero = <Callout icon={Bell} title={t("subsTitle")} desc={t("subsDesc")} />;
 
-  const subsHero = <Callout hero glyph="bell" title={t.subsTitle} desc={t.subsDesc} />;
-
-  const favHero = <Callout hero glyph="star" title={t.favTitle} desc={t.favDesc} />;
+  const favHero = <Callout icon={Star} title={t("favTitle")} desc={t("favDesc")} />;
 
   const toolbar = (withFilters: boolean) => (
     <div className={styles.toolbar}>
-      <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/sort")}>
-        <span className={cx(styles.sortChevron, sort.dir === "asc" && styles.sortChevronUp)}>
-          <Icon glyph="chevronDown" size={13} color="var(--ts-accent)" />
-        </span>
-        {t.sortField[sort.field]}
-      </button>
+      <Button className={styles.toolbarBtn} onClick={() => navigate("/sort")}>
+        {sort.dir === "asc" ? (
+          <ArrowUp className={styles.toolbarIcon} aria-hidden="true" />
+        ) : (
+          <ArrowDown className={styles.toolbarIcon} aria-hidden="true" />
+        )}
+        {locale.sortFields[sort.field]}
+      </Button>
       {withFilters && (
-        <button type="button" className={styles.toolbarBtn} onClick={() => navigate("/filters")}>
-          <Icon glyph="sliders" size={16} />
-          {t.filters}
-          {activeFilters > 0 && <span className={styles.filterDot} />}
-        </button>
+        <Button
+          variant={filtersTouched ? "primary" : "secondary"}
+          className={styles.toolbarBtn}
+          onClick={() => navigate("/filters")}
+        >
+          <SlidersHorizontal className={styles.toolbarIcon} aria-hidden="true" />
+          {t("filters")}
+        </Button>
       )}
     </div>
   );
@@ -156,28 +168,28 @@ export function Home() {
   const query = search.trim();
 
   const marks = {
-    subs: { glyph: "bell" as const, title: t.subsTitle },
-    list: { icon: <TonLogo />, title: t.mainTitle },
-    fav: { glyph: "star" as const, title: t.favTitle },
+    subs: { icon: Bell, title: t("subsTitle") },
+    list: { leading: <TonLogo />, title: t("mainTitle") },
+    fav: { icon: Star, title: t("favTitle") },
   };
 
   const actionButton = (label: string, onClick: () => void) => (
-    <button type="button" className={styles.calloutBtn} onClick={onClick}>
+    <Button variant="primary" size="xl" block onClick={onClick}>
       {label}
-    </button>
+    </Button>
   );
 
   const state = (key: Tab, desc: ReactNode, action?: ReactNode) => (
-    <Callout hero {...marks[key]} desc={desc}>
+    <Callout {...marks[key]} desc={desc}>
       {action}
     </Callout>
   );
 
   const errorState = (key: Tab) =>
-    state(key, errorStatus !== null ? `${t.loadError} (HTTP ${errorStatus})` : t.loadError, actionButton(t.retry, onReload));
+    state(key, errorStatus !== null ? `${t("loadError")} (HTTP ${errorStatus})` : t("loadError"), actionButton(labels.retry, onReload));
 
   const searchState = (key: Tab) =>
-    state(key, t.searchEmpty, listItems.length > 0 ? actionButton(t.searchInCatalog(listItems.length), () => setTab("list")) : undefined);
+    state(key, t("searchEmpty"), listItems.length > 0 ? actionButton(t("searchInCatalog", { count: listItems.length }), () => setTab("list")) : undefined);
 
   const pane = (key: Tab) => {
     if (key === "subs") {
@@ -185,52 +197,78 @@ export function Home() {
         <ProviderPane
           hero={subItems.length > 0 || subsLoading ? subsHero : undefined}
           toolbar={subsToolbar}
-          count={loggedIn && subItems.length > 0 ? t.found(subItems.length) : null}
+          count={loggedIn && subItems.length > 0 ? t("found", { count: subItems.length }) : null}
           loading={subsLoading}
           skeletonCount={Math.min(subscribed.length, COLD_ROWS)}
           rows={subItems}
-          trailing={starToggle}
+          ranks={ranks}
           fallback={
             !loggedIn ? (
-              state("subs", t.loginNeeded, <TelegramLoginButton />)
+              state("subs", t("loginNeeded"), <TelegramLoginButton />)
             ) : isError ? (
               errorState("subs")
             ) : query ? (
               searchState("subs")
             ) : subscribed.length === 0 ? (
-              state("subs", t.subsEmpty, actionButton(t.findProviders, () => setTab("list")))
+              state("subs", t("subsEmpty"), actionButton(t("findProviders"), () => setTab("list")))
             ) : (
-              state("subs", t.goneFromCatalog)
+              state("subs", t("goneFromCatalog"))
             )
           }
+          viewed={viewed}
           onOpen={openProvider}
         />
       );
     }
 
-    const items = key === "fav" ? favItems : listItems;
+    if (key === "fav") {
+      return (
+        <ProviderPane
+          hero={favItems.length > 0 || favLoading ? favHero : undefined}
+          toolbar={favToolbar}
+          count={favItems.length > 0 ? t("found", { count: favItems.length }) : null}
+          loading={favLoading}
+          skeletonCount={Math.min(favorites.length, COLD_ROWS)}
+          rows={favItems}
+          ranks={ranks}
+          fallback={
+            isError ? (
+              errorState("fav")
+            ) : query ? (
+              searchState("fav")
+            ) : favorites.length === 0 ? (
+              state("fav", t("favEmpty"), actionButton(t("findProviders"), () => setTab("list")))
+            ) : (
+              state("fav", t("goneFromCatalog"))
+            )
+          }
+          viewed={viewed}
+          onOpen={openProvider}
+        />
+      );
+    }
+
     return (
       <ProviderPane
-        hero={items.length > 0 || (key === "fav" ? favLoading : loading) ? (key === "fav" ? favHero : listHero) : undefined}
-        toolbar={key === "fav" ? favToolbar : listToolbar}
-        count={items.length > 0 ? t.found(items.length) : null}
-        loading={key === "fav" ? favLoading : loading}
-        skeletonCount={key === "fav" ? Math.min(favorites.length, COLD_ROWS) : COLD_ROWS}
-        rows={items}
-        trailing={starToggle}
+        hero={listItems.length > 0 || loading ? listHero : undefined}
+        toolbar={listToolbar}
+        loading={loading}
+        skeletonCount={COLD_ROWS}
+        rows={listRows}
+        more={
+          <ShowMore shown={listRows.length} total={listItems.length} onMore={() => setLimit((shown) => shown + PAGE_SIZE)} />
+        }
+        ranks={ranks}
         fallback={
           isError ? (
-            errorState(key)
+            errorState("list")
           ) : query ? (
-            searchState(key)
-          ) : key === "fav" && favorites.length === 0 ? (
-            state("fav", t.favEmpty, actionButton(t.findProviders, () => setTab("list")))
-          ) : key === "fav" ? (
-            state("fav", t.goneFromCatalog)
+            searchState("list")
           ) : (
-            state(key, t.providersNotFound, activeFilters > 0 ? actionButton(t.reset, resetFilters) : undefined)
+            state("list", t("providersNotFound"), filtersTouched ? actionButton(labels.reset, resetFilters) : undefined)
           )
         }
+        viewed={viewed}
         onOpen={openProvider}
       />
     );
@@ -243,23 +281,17 @@ export function Home() {
           glyph="search"
           value={search}
           onChange={setSearch}
-          placeholder={tab === "subs" ? t.searchSubs : tab === "fav" ? t.searchFav : t.searchPlaceholder}
-          trailing={
-            search && (
-              <button type="button" aria-label="Clear" className={styles.searchClear} onClick={() => setSearch("")}>
-                <Icon glyph="close" size={16} color="var(--ts-hint)" stroke={2} />
-              </button>
-            )
-          }
+          placeholder={tab === "subs" ? t("searchSubs") : tab === "fav" ? t("searchFav") : t("searchPlaceholder")}
         />
         <div className={styles.navActions}>
-          <button type="button" aria-label={t.settings} className={styles.headerBtn} onClick={() => navigate("/menu")}>
-            <Icon glyph="menu" size={22} color="var(--ts-hint)" />
-          </button>
+          <IconButton label={t("settings")} variant="secondary" size="xl" onClick={() => navigate("/menu")}>
+            <Menu className={glyphClass("md")} color="var(--text-2)" />
+          </IconButton>
         </div>
       </nav>
 
       <TabPager
+        ids={SECTIONS}
         tabs={TABS}
         tab={tab}
         scrubRef={scrubRef}
@@ -271,29 +303,30 @@ export function Home() {
         {pane}
       </TabPager>
 
-      <button
-        type="button"
-        aria-label="Scroll to top"
+      <IconButton
+        label={labels.goUp}
+        variant="primary"
+        size="lg"
         aria-hidden={!showTop}
         tabIndex={showTop ? 0 : -1}
         className={cx(styles.fab, showTop && styles.fabVisible)}
         onClick={scrollToTop}
       >
-        <Icon glyph="arrowUp" size={22} color="#fff" />
-      </button>
+        <ArrowUp className={glyphClass("md")} color="var(--btn-ink)" />
+      </IconButton>
 
-      <FloatingTabs
-        tabs={[
-          { key: "subs", label: t.subs, glyph: "bell" },
-          { key: "list", label: t.list, icon: (active) => <TonLogo size={22} mono filled={active} /> },
-          { key: "fav", label: t.fav, glyph: "star" },
+      <TabDock
+        tabs={SECTIONS}
+        items={[
+          { key: "subs", label: t("subs"), icon: Bell },
+          { key: "list", label: t("list"), icon: ProviderIcon },
+          { key: "fav", label: t("fav"), icon: Star },
         ]}
-        tab={tab}
+        value={tab}
         progress={progress}
-        onSelect={setTab}
+        onChange={setTab}
         onScrub={(position) => scrubRef.current(position)}
       />
-
     </div>
   );
 }

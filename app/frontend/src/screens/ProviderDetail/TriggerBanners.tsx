@@ -1,25 +1,28 @@
-import { Icon } from "@/components/Icon/Icon";
-import type { GlyphName } from "@/components/Icon/glyphs";
+import { Notice } from "@myton/ui";
+import { ChartColumn, Cpu, Globe, Server, type LucideIcon } from "lucide-react";
 import { ownerTriggers } from "@/data/owner";
 import { useOwnerData } from "@/hooks/useOwnerData";
-import { useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
 import type { TriggerKey } from "@/i18n/types";
 import { useAuth } from "@/stores/auth";
 import { useSubscriptions } from "@/stores/subscriptions";
 import styles from "./ProviderDetail.module.css";
 
-const TRIGGER_GLYPH: Record<TriggerKey, GlyphName> = {
-  telemetry_lost: "bars",
-  not_online: "server",
-  cpu_high: "cpu",
-  ram_high: "bars",
-  network_high: "globe",
-  disk_load_high: "bars",
-  disk_space_low: "server",
+// Offline and stopped telemetry are told to everyone above the status card; the owner's own banners keep the rest
+type OwnerTrigger = Exclude<TriggerKey, "telemetry_lost" | "not_online">;
+
+const ownerOnly = (key: TriggerKey): key is OwnerTrigger => key !== "telemetry_lost" && key !== "not_online";
+
+const TRIGGER_ICON: Record<OwnerTrigger, LucideIcon> = {
+  cpu_high: Cpu,
+  ram_high: ChartColumn,
+  network_high: Globe,
+  disk_load_high: ChartColumn,
+  disk_space_low: Server,
 };
 
 export function TriggerBanners({ pubkey }: { pubkey: string }) {
-  const t = useT();
+  const { t } = useTranslation();
   const loggedIn = useAuth((s) => s.loggedIn);
   const isSubscribed = useSubscriptions((s) => s.subscribed.includes(pubkey));
   const { payload } = useOwnerData(pubkey, isSubscribed && loggedIn, "today");
@@ -27,12 +30,14 @@ export function TriggerBanners({ pubkey }: { pubkey: string }) {
 
   return (
     <>
-      {triggers.map((trigger) => (
-        <div key={trigger.key} className={styles.triggerBanner} data-tone={trigger.color}>
-          <Icon glyph={TRIGGER_GLYPH[trigger.key]} size={16} color="var(--tone-text)" />
-          <span className={styles.bannerText}>{t.triggerNames[trigger.key]}</span>
-        </div>
-      ))}
+      {triggers.map(
+        (trigger) =>
+          ownerOnly(trigger.key) && (
+            <Notice key={trigger.key} tone={trigger.color} icon={TRIGGER_ICON[trigger.key]} className={styles.triggerBanner}>
+              {t(`triggerNames.${trigger.key}`)}
+            </Notice>
+          ),
+      )}
     </>
   );
 }

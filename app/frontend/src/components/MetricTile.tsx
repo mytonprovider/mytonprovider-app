@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Card } from "@myton/ui";
 import styles from "./MetricTile.module.css";
 
 interface MetricTileProps {
@@ -10,12 +11,12 @@ interface MetricTileProps {
 
 export function MetricTile({ value, label, unit, valueColor }: MetricTileProps) {
   return (
-    <div className={styles.tile}>
+    <Card className={styles.tile}>
       <div className={styles.value} style={valueColor ? { color: valueColor } : undefined}>
         {value}
         {unit ? <span className={styles.unit}>{unit}</span> : null}
       </div>
       <div className={styles.label}>{label}</div>
-    </div>
+    </Card>
   );
 }

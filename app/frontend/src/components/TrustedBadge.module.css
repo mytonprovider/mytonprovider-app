@@ -1,6 +1,6 @@
 .badge {
   flex: none;
   display: block;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }

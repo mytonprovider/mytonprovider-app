@@ -1,18 +1,18 @@
 .base {
   height: 100%;
-  transition: transform var(--ts-sheet-out-ms) var(--ts-sheet-ease);
+  transition: transform var(--dur-base) var(--ease-sheet);
 }
 
 .base[data-layered] {
-  transform: scale(0.96) translateY(-8px);
-  transition-duration: var(--ts-sheet-ms);
+  transform: var(--ts-layer-behind);
+  transition-duration: var(--dur-sheet);
 }
 
 .host {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 70;
+  z-index: var(--layer-stack);
 }
 
 .host:empty {

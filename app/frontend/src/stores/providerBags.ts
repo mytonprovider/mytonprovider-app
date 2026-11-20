@@ -1,8 +1,6 @@
 import { backend, type Bag, type BagFilter } from "@/data/backend";
+import { CATALOG_FRESH_MS } from "@myton/ui/domain";
 import { create } from "zustand";
-
-// Same freshness the catalogue keeps, so a return from a bag costs no request at all.
-const STALE_MS = 120_000;
 
 interface Bucket {
   items: Bag[];
@@ -26,7 +24,8 @@ export const useProviderBags = create<ProviderBagsState>((set, get) => ({
   load: async (pubkey, state) => {
     const key = bucketKey(pubkey, state);
     const cached = get().buckets[key];
-    if (cached && Date.now() - cached.fetchedAt < STALE_MS) return;
+    // Same freshness the catalogue keeps, so a return from a bag costs no request at all.
+    if (cached && Date.now() - cached.fetchedAt < CATALOG_FRESH_MS) return;
     // A bucket runs to half a megabyte, so a second request for the same one is worth skipping.
     if (inflight.has(key)) return;
     inflight.add(key);

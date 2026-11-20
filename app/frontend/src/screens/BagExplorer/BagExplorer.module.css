@@ -1,25 +1,18 @@
 .search {
-  margin-top: 14px;
-}
-
-.searchClear {
-  composes: clear from "../../styles/list.module.css";
+  margin-top: var(--space-5);
 }
 
 .link {
-  composes: link from "../../components/ExplorerAddressRow.module.css";
+  composes: link from "../../components/BagCard.module.css";
 }
 
-.mono {
-  font-family: var(--ts-font-mono);
-  font-size: 14px;
-  letter-spacing: 0.2px;
-  color: var(--ts-text);
+.rows {
+  composes: rows from "../../components/BagCard.module.css";
 }
 
 .slash {
-  margin: 0 5px;
-  color: var(--ts-hint);
+  margin: 0 var(--space-1);
+  color: var(--text-2);
 }
 
 .count {
@@ -34,113 +27,46 @@
   composes: list from "../../styles/list.module.css";
 }
 
+/* The package pill is inline: centring it on a line of its own takes a block box. */
 .report {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 22px;
-  font-size: 13px;
-  color: var(--ts-danger);
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
+  width: fit-content;
+  margin: var(--space-5) auto 0;
 }
 
-.report:active {
-  opacity: 0.6;
-}
-
-.card {
-  composes: card from "../ProviderBags/ProviderBags.module.css";
-}
-
-.providerCard {
-  composes: card from "../../components/Card.module.css";
-}
-
-/* The press the bag card and the provider row give, kept off the card that leads nowhere. */
-.press {
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.press:active {
-  transform: scale(0.985);
+.plain {
+  composes: plainRow from "../../styles/list.module.css";
 }
 
 .title {
-  composes: title from "../ProviderBags/ProviderBags.module.css";
+  composes: title from "../../components/BagCard.module.css";
 }
 
 .sub {
-  composes: sub from "../ProviderBags/ProviderBags.module.css";
+  composes: sub from "../../components/BagCard.module.css";
 }
 
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 
 .stateCard {
-  margin-top: 14px;
-}
-
-.skTile {
-  composes: tile from "../../components/MetricTile.module.css";
+  margin-top: var(--space-5);
 }
 
 .den {
-  color: var(--ts-hint);
+  color: var(--text-2);
 }
 
-.pk {
-  composes: mono from "../../styles/list.module.css";
-  font-size: 13px;
+.shapeTitle {
+  composes: shapeTitle from "../../components/BagCard.module.css";
 }
 
-.skel {
-  composes: pulse from "../../styles/anim.module.css";
-  display: inline-block;
-  border-radius: 6px;
-  background: var(--ts-seg);
-}
-
-.skLabel {
-  composes: skel;
-  width: 34%;
-  height: 15px;
-}
-
-.skValueWide {
-  composes: skel;
-  width: 58%;
-  height: 15px;
-}
-
-.skValueMid {
-  composes: skel;
-  width: 44%;
-  height: 15px;
-}
-
-.skValueNarrow {
-  composes: skel;
-  width: 32%;
-  height: 15px;
-}
-
-.skTitle {
-  composes: skel;
-  width: 42%;
-  height: 15px;
-}
-
-.skSub {
-  composes: skel;
-  width: 54%;
-  height: 13px;
+/* The tile's number sits on the font's own line, the ghost on the package's base line: 29 px against 24. */
+.tileGhost {
+  line-height: normal;
 }
 

@@ -1,16 +1,13 @@
-import { Card } from "@/components/Card";
-import { Callout } from "@/components/Callout";
+import { Check, Pencil, X } from "lucide-react";
+import { Badge, Button, Cell, EmptyState, FieldList, glyphClass, IconButton, ShortId, TelegramIcon } from "@myton/ui";
 import { Field } from "@/components/Field";
-import { Icon } from "@/components/Icon/Icon";
 import { NameSheet } from "@/components/NameSheet";
 import { Screen } from "@/components/Screen";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { BADGE_SRC } from "@/components/TrustedBadge";
 import { toggleTrusted } from "@/data/sync";
-import { useT } from "@/i18n";
-import { explorerAddressUrl, parseAddress } from "@/lib/address";
-import { cx } from "@/lib/cx";
-import { shorten } from "@/lib/format";
+import { useTranslation } from "react-i18next";
+import { explorerUrl, toFriendly } from "@myton/ui/domain";
 import { useSettings } from "@/stores/settings";
 import { useNames } from "@/stores/names";
 import { useChannels } from "@/stores/channels";
@@ -22,7 +19,7 @@ import styles from "./Trusted.module.css";
 type Invalid = "none" | "format" | "duplicate";
 
 export function Trusted() {
-  const t = useT();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const explorer = useSettings((s) => s.explorer);
   const addresses = useTrusted((s) => s.addresses);
@@ -34,7 +31,7 @@ export function Trusted() {
   const [editing, setEditing] = useState<string | null>(null);
 
   const submit = () => {
-    const address = parseAddress(value.trim());
+    const address = toFriendly(value.trim());
     if (address === null) {
       setInvalid("format");
       return;
@@ -47,7 +44,7 @@ export function Trusted() {
     setValue("");
   };
 
-  const header = <ScreenHeader title={t.trustedTitle} onBack={() => navigate(-1)} />;
+  const header = <ScreenHeader title={t("trustedTitle")} onBack={() => navigate(-1)} />;
 
   return (
     <Screen header={header}>
@@ -58,70 +55,67 @@ export function Trusted() {
           setValue(next);
           setInvalid("none");
         }}
-        placeholder={t.trustedPlaceholder}
+        placeholder={t("trustedPlaceholder")}
         enterKeyHint="done"
         invalid={invalid !== "none"}
         onEnter={submit}
         trailing={
-          <button type="button" className={styles.add} disabled={!value.trim()} onClick={submit}>
-            {t.trustedAdd}
-          </button>
+          <Button variant="primary" size="sm" disabled={!value.trim()} onClick={submit}>
+            {t("trustedAdd")}
+          </Button>
         }
       />
       {invalid !== "none" && (
-        <div className={styles.error}>{invalid === "format" ? t.trustedInvalid : t.trustedDuplicate}</div>
+        <div className={styles.error}>{invalid === "format" ? t("trustedInvalid") : t("trustedDuplicate")}</div>
       )}
 
       {addresses.length === 0 ? (
-        <Callout glyph="check" title={t.trustedEmptyTitle} desc={t.trustedEmptyDesc} />
+        <EmptyState size="lg" icon={Check} title={t("trustedEmptyTitle")} hint={t("trustedEmptyDesc")} />
       ) : (
         <>
-          <div className={styles.count}>{t.trustedCount(addresses.length)}</div>
-          <Card>
-            {addresses.map((address, index) => (
-              <div key={address} className={cx(styles.row, index > 0 && styles.divider)}>
-                <a
-                  className={names[address] ? styles.name : styles.link}
-                  href={explorerAddressUrl(address, explorer)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {names[address] || shorten(address, 14)}
-                </a>
-                <span className={styles.actions}>
-                  {channels[address] && (
-                    <a
-                      className={styles.channel}
-                      href={channels[address].invite_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Icon glyph="telegram" size={12} color="var(--ts-accent)" />
-                      {t.channel}
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    aria-label={t.nameEdit}
-                    className={styles.action}
-                    onClick={() => setEditing(address)}
+          <div className={styles.count}>{t("trustedCount", { count: addresses.length })}</div>
+          <FieldList card>
+            {addresses.map((address) => (
+              <Cell
+                key={address}
+                label={
+                  <a
+                    className={names[address] ? styles.name : styles.link}
+                    href={explorerUrl(address, explorer)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <Icon glyph="edit" size={16} color="var(--ts-hint)" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={t.trustedRemove}
-                    className={styles.action}
-                    onClick={() => toggleTrusted(address)}
-                  >
-                    <Icon glyph="close" size={16} color="var(--ts-danger)" stroke={2} />
-                  </button>
-                </span>
-              </div>
+                    {names[address] || <ShortId value={address} upper={false} />}
+                  </a>
+                }
+                trailing={
+                  <span className={styles.actions}>
+                    {channels[address] && (
+                      <a
+                        className={styles.channel}
+                        href={channels[address].invite_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Badge tone="accent" size="sm">
+                          <TelegramIcon className={styles.channelIcon} />
+                          {t("channel")}
+                        </Badge>
+                      </a>
+                    )}
+                    <IconButton size="xs" label={t("nameEdit")} onClick={() => setEditing(address)}>
+                      <Pencil className={glyphClass("xs")} color="var(--text-2)" />
+                    </IconButton>
+                    <IconButton size="xs" label={t("trustedRemove")} onClick={() => toggleTrusted(address)}>
+                      <X className={glyphClass("xs")} color="var(--btn-danger)" />
+                    </IconButton>
+                  </span>
+                }
+              />
             ))}
-          </Card>
+          </FieldList>
           <div className={styles.note}>
-            {t.trustedNote}
+            {t("trustedNote")}
             <img className={styles.noteBadge} src={BADGE_SRC} alt="" />
           </div>
         </>
@@ -130,7 +124,7 @@ export function Trusted() {
         <NameSheet
           kind="address"
           target={editing}
-          subtitle={shorten(editing, 14)}
+          subtitle={<ShortId value={editing} upper={false} />}
           onClose={() => setEditing(null)}
         />
       )}

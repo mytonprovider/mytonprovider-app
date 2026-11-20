@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 // Three states, not a flag: before the attempt finishes "no session" would read as a refusal.
-export type SessionState = "unknown" | "open" | "closed";
+type SessionState = "unknown" | "open" | "closed";
 
 export interface AuthUser {
   name: string;

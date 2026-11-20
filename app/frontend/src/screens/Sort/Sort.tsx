@@ -1,16 +1,18 @@
-import { tick } from "@/lib/telegram";
-import { Card } from "@/components/Card";
-import { Icon } from "@/components/Icon/Icon";
+import { SortList } from "@myton/ui";
+import { SORT_FIELDS } from "@myton/ui/domain";
+import { locales } from "@myton/ui/locale";
+import { SheetTitle } from "@/app/layers/Sheet";
 import { MainButton } from "@/components/MainButton";
-import { SORT_FIELDS } from "@/data/query";
-import { useT } from "@/i18n";
-import { cx } from "@/lib/cx";
+import { useAppliedLang } from "@/i18n";
+import { tick } from "@/lib/telegram";
 import { useCatalogQuery } from "@/stores/catalogQuery";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import styles from "./Sort.module.css";
 
 export function Sort() {
-  const t = useT();
+  const { t } = useTranslation();
+  const locale = locales[useAppliedLang()];
   const navigate = useNavigate();
 
   const sort = useCatalogQuery((s) => s.sort);
@@ -19,35 +21,19 @@ export function Sort() {
   // The list sorts behind the sheet as the row is tapped, so the button only puts the sheet away.
   return (
     <>
-      <div className={styles.title}>{t.sortBy}</div>
-      <Card>
-        {SORT_FIELDS.map((field) => {
-          const active = sort.field === field;
-          return (
-            <button
-              key={field}
-              type="button"
-              className={styles.row}
-              onClick={() => {
-                tick();
-                setSortField(field);
-              }}
-            >
-              <span className={cx(styles.label, active && styles.labelActive)}>{t.sortField[field]}</span>
-              {active && (
-                <span className={styles.dir}>
-                  {t.sortDir[sort.dir]}
-                  <span className={cx(styles.chevron, sort.dir === "asc" && styles.chevronUp)}>
-                    <Icon glyph="chevronDown" size={16} color="var(--ts-accent)" />
-                  </span>
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </Card>
+      <SheetTitle title={t("sortBy")} onClose={() => navigate(-1)} />
+      <SortList
+        options={SORT_FIELDS.map((field) => ({ value: field, label: locale.sortFields[field] }))}
+        value={sort.field}
+        direction={sort.dir}
+        directionLabel={locale.sortDirection[sort.dir]}
+        onPick={(field) => {
+          tick();
+          setSortField(field);
+        }}
+      />
       <div className={styles.action}>
-        <MainButton label={t.done} onClick={() => navigate(-1)} />
+        <MainButton label={t("done")} onClick={() => navigate(-1)} />
       </div>
     </>
   );

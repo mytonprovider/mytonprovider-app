@@ -23,7 +23,7 @@
   scroll-snap-align: start;
   scroll-snap-stop: always;
   scrollbar-width: none;
-  padding-inline: max(16px, var(--ts-column));
+  padding-inline: max(var(--space-6), var(--ts-column));
 }
 
 .pane::-webkit-scrollbar {
@@ -35,5 +35,5 @@
   display: flex;
   flex-direction: column;
   flex: 1 0 auto;
-  padding-bottom: calc(48px + var(--ts-dock-space, 0px) + var(--ts-safe-bottom));
+  padding-bottom: calc(var(--ts-screen-end) + var(--dock-space));
 }

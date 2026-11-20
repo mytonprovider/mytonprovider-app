@@ -1,91 +1,42 @@
 .row {
-  padding: 12px 12px 14px;
-  background: var(--ts-card);
-  border-radius: var(--ts-radius-card);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.row:active {
-  transform: scale(0.985);
+  padding: var(--space-5) var(--space-5) var(--pad-pill);
 }
 
 .head {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-2);
 }
 
 .pk {
-  min-width: 0;
-  font-family: var(--ts-font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  color: var(--ts-value);
-  overflow: hidden;
-  white-space: nowrap;
+  font-size: var(--font-base);
+  font-weight: var(--w-medium);
+  color: var(--text);
 }
 
 .name {
+  composes: ellipsis from "@myton/ui/text.module.css";
   min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ts-value);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--font-base);
+  font-weight: var(--w-medium);
+  color: var(--text);
 }
 
-/* The tone's text is quiet on its own fill, so the label needs no bold. */
+/* The status shows only its word, the share of passed checks being in the sheet, and keeps to the right by the share,
+   as on the sites' phone row. */
 .status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 var(--ts-status-w);
-  min-width: 0;
+  flex: none;
   margin-left: auto;
-  overflow: hidden;
-  min-height: 24px;
-  padding: 0 8px;
-  border-radius: var(--ts-radius-pill);
-  background: var(--tone-weak);
-  box-shadow: inset 0 0 0 1px var(--tone-ring);
-  color: var(--tone-text);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 24px;
-  font-variant-numeric: tabular-nums;
-}
-
-.mark {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.ratio {
-  font-size: 12px;
-  font-weight: 400;
-}
-
-@media (max-width: 339px) {
-  .status {
-    flex-basis: 116px;
-  }
-
-  .ratio {
-    display: none;
-  }
 }
 
 .cells {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px 10px;
-  margin: 12px -12px 0;
-  padding: 12px 12px 0;
-  border-top: var(--ts-hairline) solid var(--ts-sepf);
+  gap: var(--space-5) var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  /* The sites' card line: it splits the key from the figures, so it is the strong border, not a hairline. */
+  border-top: 1px solid var(--border-strong);
 }
 
 .cell {
@@ -98,69 +49,67 @@
    standing in for it while it loads. The value is pinned by height too: the unit span inside
    it grows the line box to 18px on its own, and the list would shift by 2px a card. */
 .cellLabel {
-  font-size: 11.5px;
-  line-height: 13px;
-  color: var(--ts-hint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  composes: ellipsis from "@myton/ui/text.module.css";
+  font-size: var(--font-xs);
+  letter-spacing: var(--tracking-small);
+  line-height: 15px;
+  color: var(--text-2);
 }
 
 .cellValue {
-  margin-top: 2px;
-  height: 17px;
-  font-size: 14px;
-  line-height: 17px;
-  font-weight: 600;
-  color: var(--ts-value);
+  composes: ellipsis from "@myton/ui/text.module.css";
+  margin-top: var(--space-0);
+  height: 18px;
+  font-size: var(--font-base);
+  line-height: 18px;
+  font-weight: var(--w-value);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .unit {
-  color: var(--ts-hint);
-  font-weight: 400;
+  color: var(--text-2);
+  font-size: var(--font-xs);
+  letter-spacing: var(--tracking-small);
+  font-weight: var(--w-regular);
+}
+
+.star {
+  display: inline-block;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin-right: var(--space-2);
+  vertical-align: -3px;
+  color: var(--star);
+  fill: currentColor;
 }
 
 /* The loading state of this very row: same classes, same line boxes, text made invisible.
    Nothing to keep in sync, so the list cannot shift when the answer replaces it. */
 .placeholder {
   composes: row;
-  composes: pulse from "../styles/anim.module.css";
-  cursor: default;
-}
-
-.placeholder:active {
-  transform: none;
-}
-
-.shape {
-  border-radius: 5px;
-  background: var(--ts-seg);
-  color: transparent;
+  composes: plainRow from "../styles/list.module.css";
 }
 
 .shapeToggle {
-  composes: shape;
   flex: none;
-  width: var(--ts-toggle);
-  height: var(--ts-toggle);
+  width: var(--control-sm);
+  height: var(--control-sm);
   border-radius: 50%;
 }
 
 .shapeKey {
-  composes: shape;
   width: 128px;
 }
 
+.shapeStatus {
+  width: 84px;
+}
+
 .shapeLabel {
-  composes: shape;
   width: 62%;
 }
 
 .shapeValue {
-  composes: shape;
   width: 80%;
 }

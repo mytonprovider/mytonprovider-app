@@ -1,10 +1,10 @@
 import { type AlertSettingsPayload, BackendError, type NamesPayload, backend } from "@/data/backend";
-import type { Explorer, Theme } from "@/stores/settings";
+import { CATALOG_FRESH_MS, type Explorer, toFriendly } from "@myton/ui/domain";
+import type { Theme } from "@/stores/settings";
 import { ALERT_TYPES, defaultThreshold, type AlertTypeMap, type ThresholdMap } from "@/data/alerts";
-import { normalizeLang } from "@/i18n";
+import { pickLang } from "@myton/ui/i18n";
 import type { AlertKey, Lang } from "@/i18n/types";
-import { toUserFriendly } from "@/lib/address";
-import { readLocal, writeLocal } from "@/lib/storage";
+import { readLocal, writeLocal } from "@myton/ui";
 import { useAlerts } from "@/stores/alerts";
 import { makeAuthUser, useAuth } from "@/stores/auth";
 import { useSettings } from "@/stores/settings";
@@ -56,11 +56,10 @@ function namesPayload(): NamesPayload {
 // The profile carries settings someone changed on another device, so a tick asks for it on the
 // same terms as the catalogue. A login adopts preferences and has to read through; a failed read
 // leaves the mark alone, so a retry is never held back.
-const STALE_MS = 120_000;
 let profileAt = 0;
 
 export async function hydrateFromServer(adoptPreferences = false): Promise<void> {
-  if (!adoptPreferences && Date.now() - profileAt < STALE_MS) return;
+  if (!adoptPreferences && Date.now() - profileAt < CATALOG_FRESH_MS) return;
   flushAlerts();
   await chain;
   let profile: Awaited<ReturnType<typeof backend.profile>>;
@@ -100,7 +99,7 @@ export async function hydrateFromServer(adoptPreferences = false): Promise<void>
   useAlerts.getState().setAll(profile.alerts.enabled, types, thresholds);
   if (adoptPreferences) {
     useSettings.setState({
-      lang: normalizeLang(profile.language_code),
+      lang: pickLang(profile.language_code),
       langAuto: false,
       explorer: profile.explorer,
       ...(profile.theme === "auto" ? {} : { theme: profile.theme, themeAuto: false }),
@@ -115,7 +114,7 @@ export function toggleFavorite(pubkey: string): void {
 }
 
 export function toggleTrusted(address: string): void {
-  const key = toUserFriendly(address);
+  const key = toFriendly(address) ?? address;
   useTrusted.getState().toggle(key);
   const addresses = useTrusted.getState().addresses;
   queue("trusted sync", () => backend.putTrusted(addresses));

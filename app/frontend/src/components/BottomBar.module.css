@@ -1,6 +1,6 @@
 .bar {
   flex: none;
-  padding-block: 12px calc(14px + var(--ts-safe-bottom));
-  padding-inline: max(16px, var(--ts-column));
-  background: var(--ts-bg);
+  padding-block: var(--space-5) calc(var(--pad-pill) + var(--ts-safe-bottom));
+  padding-inline: max(var(--space-6), var(--ts-column));
+  background: var(--bg);
 }

@@ -1,12 +1,12 @@
+import { Eye } from "lucide-react";
+import { glyphClass, IconButton, useUi } from "@myton/ui";
 import { BottomSheet } from "@/components/BottomSheet";
 import { Field } from "@/components/Field";
-import { Icon } from "@/components/Icon/Icon";
 import { MainButton } from "@/components/MainButton";
 import { BackendError } from "@/data/backend";
 import { subscribeWithPassword } from "@/data/sync";
 import { refreshOwner } from "@/hooks/useOwnerData";
-import { useT } from "@/i18n";
-import { cx } from "@/lib/cx";
+import { useTranslation } from "react-i18next";
 import { notify } from "@/lib/telegram";
 import { useEffect, useRef, useState } from "react";
 import styles from "./PasswordSheet.module.css";
@@ -17,7 +17,6 @@ type PwError = "none" | "wrong" | "locked" | "nopass" | "failed";
 const MAX_ATTEMPTS = 3;
 const LOCK_MS = 15000;
 const SUCCESS_MS = 800;
-const SHAKE_MS = 400;
 
 interface PasswordSheetProps {
   pubkey: string;
@@ -25,7 +24,8 @@ interface PasswordSheetProps {
 }
 
 export function PasswordSheet({ pubkey, onClose }: PasswordSheetProps) {
-  const t = useT();
+  const { t } = useTranslation();
+  const { labels } = useUi();
   const [value, setValue] = useState("");
   const [show, setShow] = useState(false);
   const [status, setStatus] = useState<PwStatus>("idle");
@@ -49,7 +49,6 @@ export function PasswordSheet({ pubkey, onClose }: PasswordSheetProps) {
     setError(next);
     setShaking(true);
     notify("error");
-    track(setTimeout(() => setShaking(false), SHAKE_MS));
   };
 
   const lockFor = (ms: number) => {
@@ -103,43 +102,44 @@ export function PasswordSheet({ pubkey, onClose }: PasswordSheetProps) {
   const mainState = status === "checking" ? "loading" : status === "success" ? "success" : "idle";
   const errorText =
     error === "locked"
-      ? t.pwTooMany
+      ? t("pwTooMany")
       : error === "wrong"
-        ? t.pwWrong
+        ? t("pwWrong")
         : error === "nopass"
-          ? t.pwNoPass
+          ? t("pwNoPass")
           : error === "failed"
-            ? t.pwFailed
+            ? t("pwFailed")
             : "";
-  const label = locked ? t.pwLocked : t.pwUnlock;
+  const label = locked ? t("pwLocked") : t("pwUnlock");
 
   return (
-    <BottomSheet title={t.pwTitle} subtitle={t.pwSubtitle} onClose={onClose}>
+    <BottomSheet title={t("pwTitle")} subtitle={t("pwSubtitle")} onClose={onClose}>
       {(close) => (
         <>
-          <Field
-            className={cx(styles.field, shaking && styles.fieldShake)}
-            glyph="lock"
-            invalid={error !== "none"}
-            password={!show}
-            value={value}
-            onChange={(next) => {
-              setValue(next);
-              setStatus("idle");
-              setError("none");
-            }}
-            placeholder={t.pwPlaceholder}
-            trailing={
-              <button
-                type="button"
-                aria-label="Toggle visibility"
-                className={styles.eye}
-                onClick={() => setShow((prev) => !prev)}
-              >
-                <Icon glyph="eye" size={18} color="var(--ts-hint)" />
-              </button>
-            }
-          />
+          <div className={shaking ? styles.fieldShake : undefined} onAnimationEnd={() => setShaking(false)}>
+            <Field
+              className={styles.field}
+              glyph="lock"
+              invalid={error !== "none"}
+              password={!show}
+              value={value}
+              onChange={(next) => {
+                setValue(next);
+                setStatus("idle");
+                setError("none");
+              }}
+              placeholder={t("pwPlaceholder")}
+              trailing={
+                <IconButton
+                  size="sm"
+                  label={show ? labels.hidePassword : labels.showPassword}
+                  onClick={() => setShow((prev) => !prev)}
+                >
+                  <Eye className={glyphClass("sm")} color="var(--text-2)" />
+                </IconButton>
+              }
+            />
+          </div>
           <div className={styles.error}>{errorText}</div>
           <div className={styles.submit}>
             <MainButton label={label} state={mainState} disabled={locked} onClick={() => submit(close)} />

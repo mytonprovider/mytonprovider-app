@@ -1,27 +1,25 @@
 .tile {
-  padding: 12px 6px;
-  background: var(--ts-card);
-  border-radius: var(--ts-radius-group);
+  padding: var(--space-5) var(--space-2);
   text-align: center;
 }
 
 .value {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ts-text);
+  font-size: var(--font-xl);
+  font-weight: var(--w-bold);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 .unit {
-  margin-left: 3px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ts-hint);
+  margin-left: var(--space-05);
+  font-size: var(--font-xs);
+  font-weight: var(--w-medium);
+  color: var(--text-2);
 }
 
 .label {
-  margin-top: 3px;
-  font-size: 11px;
-  color: var(--ts-hint);
+  margin-top: var(--space-05);
+  font-size: var(--font-xs);
+  color: var(--text-2);
 }
 

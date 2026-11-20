@@ -2,21 +2,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: var(--space-3);
   width: 100%;
-  padding: 12px;
+  min-height: var(--control-lg);
+  padding: 0 var(--space-7);
   border: none;
-  border-radius: var(--ts-radius-field);
+  border-radius: var(--radius-pill);
   background: var(--ts-tg);
-  color: #fff;
-  font-size: 15.5px;
-  font-weight: 600;
+  color: var(--btn-ink);
+  font-size: var(--font-lg);
+  font-weight: var(--w-medium);
   font-family: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.15s ease;
+  transition: transform var(--press-out) ease;
 }
 
 .button:active {
-  transform: scale(0.98);
+  transform: scale(var(--press-scale));
+  transition-duration: var(--press-in);
+}
+
+.icon {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }

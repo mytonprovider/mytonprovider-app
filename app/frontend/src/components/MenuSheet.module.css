@@ -1,31 +1,31 @@
 .accountSlot {
   display: flex;
   align-items: center;
-  min-height: 64px;
+  /* A card row: the avatar and the card row's inset above and below, held while the login button stands in. */
+  min-height: calc(var(--control-md) + 2 * var(--row-py));
 }
 
 .account {
   display: flex;
   flex: 1;
+  align-self: stretch;
   align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-  background: var(--ts-card);
-  border-radius: var(--ts-radius-group);
+  gap: var(--space-5);
+  padding: 0 var(--row-px);
 }
 
 .avatar {
   flex: none;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: var(--control-md);
+  height: var(--control-md);
   border-radius: 50%;
-  background: var(--ts-seg);
+  background: var(--fill);
   object-fit: cover;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ts-text);
+  font-size: var(--font-lg);
+  font-weight: var(--w-medium);
+  color: var(--text);
 }
 
 .accountInfo {
@@ -33,17 +33,15 @@
 }
 
 .accountName {
-  font-size: 15px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  composes: ellipsis from "@myton/ui/text.module.css";
+  font-size: var(--font-lg);
+  font-weight: var(--w-medium);
 }
 
 .accountUser {
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--ts-hint);
+  margin-top: var(--space-0);
+  font-size: var(--font-xs);
+  color: var(--text-2);
 }
 
 .login {
@@ -52,81 +50,39 @@
   justify-content: center;
 }
 
+/* Edge to edge across the sheet, whose body pads its content by --space-6. */
 .separator {
-  height: var(--ts-hairline);
-  margin: 16px -16px 0;
-  background: var(--ts-sep);
+  height: var(--hairline);
+  margin: var(--space-6) calc(-1 * var(--space-6)) 0;
+  background: var(--divider);
 }
-
 
 .group {
-  margin: 22px 0 8px;
-  border-radius: var(--ts-radius-group);
-  background: var(--ts-card);
-  overflow: hidden;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 13px 14px;
-  border: none;
-  background: none;
-  color: var(--ts-text);
-  font-family: inherit;
-  font-size: 15px;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.row + .row {
-  border-top: var(--ts-hairline) solid var(--ts-sepf);
-}
-
-.row:active {
-  opacity: 0.6;
+  margin: var(--space-7) 0 var(--space-3);
 }
 
 .tile {
   flex: none;
   display: grid;
   place-items: center;
-  width: 29px;
-  height: 29px;
-  border-radius: 8px;
-  background: var(--ts-accent);
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border-radius: var(--radius-xs);
+  background: var(--btn);
 }
-
-.tail {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-left: auto;
-}
-
-
 
 .label {
-  margin: 20px 0 8px;
-  font-size: 13.5px;
-  color: var(--ts-hint);
+  margin: var(--space-7) 0 var(--space-3);
+  font-size: var(--font-xs);
+  color: var(--text-2);
 }
 
 .logout {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
   margin-left: auto;
-  padding: 0;
-  border: none;
-  border-radius: 10px;
-  background: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+}
+
+.glyph {
+  width: var(--icon-control);
+  height: var(--icon-control);
+  color: var(--btn-ink);
 }

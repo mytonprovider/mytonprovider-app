@@ -1,28 +1,21 @@
-// The raw tone, for marks that carry no text of their own: a tick, a gauge arc, a bar.
+import type { StatusTone, Tone } from "@myton/ui/domain";
+
+// The raw tone, for marks that carry no text of their own: a tick, a gauge arc, a bar. The theme's tone scale is tuned
+// for text and tints; a mark without text keeps the vivid tone.
 export const SC = {
   gray: "#8e8e93",
-  green: "#2ec06c",
+  green: "var(--ts-green)",
   yellow: "#e0a000",
   orange: "#ff8c1a",
   red: "#ff3b30",
 } as const;
 
-export type StatusTone = keyof typeof SC;
-
 export function toneText(tone: StatusTone): string {
-  return `var(--ts-tone-${tone}-text)`;
+  return `var(--tone-${tone}-text)`;
 }
 
-export function toneColor(tone: StatusTone | "accent"): string {
-  return `var(--ts-tone-${tone})`;
+export function toneColor(tone: Tone): string {
+  return tone === "accent" ? "var(--accent)" : `var(--tone-${tone})`;
 }
 
-export const ACCENT = "#0098ea";
-export const GOLD = "#c8901a";
-export const PRIZE_RANK = 3;
-export const TOP_RANK = 10;
-
-export function rankColor(rank: number): string {
-  if (rank <= PRIZE_RANK) return GOLD;
-  return rank <= TOP_RANK ? ACCENT : "var(--ts-hint)";
-}
+export const ACCENT = "var(--accent)";

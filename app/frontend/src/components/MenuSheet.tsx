@@ -1,62 +1,52 @@
+import { ArrowUpRight, Bell, Check, LogOut, Search, Server, SlidersHorizontal } from "lucide-react";
+import { Card, Cell, FieldList, type Glyph, glyphClass, IconButton, SegmentedControl, TelegramIcon } from "@myton/ui";
 import { endSession } from "@/app/session";
-import { Icon } from "@/components/Icon/Icon";
-import type { GlyphName } from "@/components/Icon/glyphs";
-import { SegmentControl } from "@/components/SegmentControl";
 import { TelegramLoginButton } from "@/components/TelegramLoginButton";
 import { setExplorer, setLanguage, setTheme } from "@/data/sync";
 import { useAppliedTheme } from "@/hooks/useTheme";
-import { useAppliedLang, useT } from "@/i18n";
+import { useTranslation } from "react-i18next";
+import { useAppliedLang } from "@/i18n";
 import type { Lang } from "@/i18n/types";
 import { isInTelegram, openExternal } from "@/lib/telegram";
 import { useAuth } from "@/stores/auth";
-import { type Explorer, type Theme, useSettings } from "@/stores/settings";
+import type { Explorer } from "@myton/ui/domain";
+import { type Theme, useSettings } from "@/stores/settings";
 import { useNavigate } from "react-router";
 import styles from "./MenuSheet.module.css";
 
 interface MenuRowProps {
-  glyph: GlyphName;
+  icon: Glyph;
   label: string;
   href?: string;
   external?: boolean;
   onClick?: () => void;
 }
 
-function MenuRow({ glyph, label, href, external, onClick }: MenuRowProps) {
-  const body = (
-    <>
-      <span className={styles.tile}>
-        <Icon glyph={glyph} size={17} color="var(--ts-on-accent)" />
-      </span>
-      {label}
-      <span className={styles.tail}>
-        <Icon glyph={external ? "external" : "chevron"} size={external ? 15 : 16} color="var(--ts-hint)" />
-      </span>
-    </>
-  );
-
-  if (!href) {
-    return (
-      <button type="button" className={styles.row} onClick={onClick}>
-        {body}
-      </button>
-    );
-  }
-
+function MenuRow({ icon: Icon, label, href, external, onClick }: MenuRowProps) {
   return (
-    <a className={styles.row} href={href} {...(external && { target: "_blank", rel: "noopener noreferrer" })}>
-      {body}
-    </a>
+    <Cell
+      leading={
+        <span className={styles.tile}>
+          <Icon className={styles.glyph} aria-hidden="true" />
+        </span>
+      }
+      label={label}
+      trailing={external && <ArrowUpRight size={15} color="var(--text-2)" />}
+      chevron={!external}
+      href={href}
+      external={external}
+      onClick={onClick}
+    />
   );
 }
 
 export function MenuSheet() {
-  const t = useT();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const theme = useAppliedTheme();
   const lang = useAppliedLang();
   const explorer = useSettings((s) => s.explorer);
-
 
   const loggedIn = useAuth((s) => s.loggedIn);
   const user = useAuth((s) => s.user);
@@ -69,7 +59,7 @@ export function MenuSheet() {
     <>
       <div className={styles.accountSlot}>
         {loggedIn && user ? (
-          <div className={styles.account}>
+          <Card className={styles.account}>
             {user.photoUrl ? (
               <img className={styles.avatar} src={user.photoUrl} alt="" />
             ) : (
@@ -80,16 +70,11 @@ export function MenuSheet() {
               {user.username && <div className={styles.accountUser}>@{user.username}</div>}
             </div>
             {!inTelegram && (
-              <button
-                type="button"
-                aria-label={t.logout}
-                className={styles.logout}
-                onClick={endSession}
-              >
-                <Icon glyph="logout" size={20} color="var(--ts-danger)" />
-              </button>
+              <IconButton tone="red" label={t("logout")} className={styles.logout} onClick={endSession}>
+                <LogOut className={glyphClass("md")} />
+              </IconButton>
             )}
-          </div>
+          </Card>
         ) : (
           !inTelegram && (
             <div className={styles.login}>
@@ -101,8 +86,8 @@ export function MenuSheet() {
 
       <div className={styles.separator} />
 
-      <div className={styles.label}>{t.language}</div>
-      <SegmentControl<Lang>
+      <div className={styles.label}>{t("language")}</div>
+      <SegmentedControl<Lang>
         options={[
           { value: "en", label: "English" },
           { value: "ru", label: "Русский" },
@@ -111,18 +96,18 @@ export function MenuSheet() {
         onChange={setLanguage}
       />
 
-      <div className={styles.label}>{t.appearance}</div>
-      <SegmentControl<Theme>
+      <div className={styles.label}>{t("appearance")}</div>
+      <SegmentedControl<Theme>
         options={[
-          { value: "light", label: t.light },
-          { value: "dark", label: t.dark },
+          { value: "light", label: t("light") },
+          { value: "dark", label: t("dark") },
         ]}
         value={theme}
         onChange={setTheme}
       />
 
-      <div className={styles.label}>{t.explorerLabel}</div>
-      <SegmentControl<Explorer>
+      <div className={styles.label}>{t("explorerLabel")}</div>
+      <SegmentedControl<Explorer>
         options={[
           { value: "tonviewer", label: "Tonviewer" },
           { value: "tonscan", label: "Tonscan" },
@@ -131,14 +116,14 @@ export function MenuSheet() {
         onChange={setExplorer}
       />
 
-      <div className={styles.group}>
-        {isAdmin && <MenuRow glyph="sliders" label={t.adminPanel} external onClick={openAdmin} />}
-        <MenuRow glyph="bell" label={t.alertSettings} onClick={() => navigate("/alerts")} />
-        <MenuRow glyph="search" label={t.explorerTitle} onClick={() => navigate("/bags")} />
-        <MenuRow glyph="check" label={t.trustedTitle} onClick={() => navigate("/trusted")} />
-        <MenuRow glyph="server" label={t.becomeProvider} href="https://github.com/igroman787/mytonprovider" external />
-        <MenuRow glyph="telegram" label={t.support} href="https://t.me/mytonprovider_chat" external />
-      </div>
+      <FieldList card className={styles.group}>
+        {isAdmin && <MenuRow icon={SlidersHorizontal} label={t("adminPanel")} external onClick={openAdmin} />}
+        <MenuRow icon={Bell} label={t("alertSettings")} onClick={() => navigate("/alerts")} />
+        <MenuRow icon={Search} label={t("explorerTitle")} onClick={() => navigate("/bags")} />
+        <MenuRow icon={Check} label={t("trustedTitle")} onClick={() => navigate("/trusted")} />
+        <MenuRow icon={Server} label={t("becomeProvider")} href="https://github.com/igroman787/mytonprovider" external />
+        <MenuRow icon={TelegramIcon} label={t("support")} href="https://t.me/mytonprovider_chat" external />
+      </FieldList>
     </>
   );
 }

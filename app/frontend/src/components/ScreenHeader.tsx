@@ -1,31 +1,33 @@
-import { Icon } from "@/components/Icon/Icon";
-import { useInSheet } from "@/app/layers/Sheet";
-import { bindBackButton, isInTelegram } from "@/lib/telegram";
+import { SheetHeader } from "@myton/ui";
+import { bindBackButton } from "@/lib/telegram";
 import { type ReactNode, useEffect, useRef } from "react";
 import styles from "./ScreenHeader.module.css";
 
 interface ScreenHeaderProps {
-  title: ReactNode;
+  title: string;
+  badge?: number;
+  lead?: ReactNode;
   onBack: () => void;
   right?: ReactNode;
 }
 
-export function ScreenHeader({ title, onBack, right }: ScreenHeaderProps) {
+// Every route past the list opens as a sheet, so its header is the sites' one; the close stays in Telegram too,
+// next to the system back button.
+export function ScreenHeader({ title, badge, lead, onBack, right }: ScreenHeaderProps) {
   const handler = useRef(onBack);
   handler.current = onBack;
-  const inSheet = useInSheet();
 
   useEffect(() => bindBackButton(() => handler.current()), []);
 
   return (
-    <header className={styles.header}>
-      {!isInTelegram() && !inSheet && (
-        <button type="button" aria-label="Back" className={styles.back} onClick={onBack}>
-          <Icon glyph="arrowLeft" size={23} color="var(--ts-accent)" />
-        </button>
-      )}
-      <div className={styles.title}>{title}</div>
-      {right && <div className={styles.right}>{right}</div>}
-    </header>
+    <SheetHeader
+      title={title}
+      badge={badge}
+      lead={lead}
+      actions={right}
+      grabber={false}
+      onClose={onBack}
+      className={styles.header}
+    />
   );
 }

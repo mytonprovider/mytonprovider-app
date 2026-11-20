@@ -5,7 +5,7 @@ export interface DialogSlot {
   close: () => void;
 }
 
-export interface LayerHost {
+interface LayerHost {
   container: HTMLElement | null;
   routeDepth: number;
   dialogs: DialogSlot[];

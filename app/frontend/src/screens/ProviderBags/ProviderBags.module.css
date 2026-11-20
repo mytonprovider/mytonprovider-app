@@ -1,27 +1,24 @@
 .about {
-  margin-top: 14px;
-  padding: 12px 14px;
-  background: var(--ts-card);
-  border-radius: var(--ts-radius-card);
+  margin-top: var(--space-5);
 }
 
 .aboutHead {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14.5px;
-  font-weight: 600;
+  gap: var(--space-3);
+  font-size: var(--font-lg);
+  font-weight: var(--w-medium);
 }
 
 .aboutText {
-  margin-top: 5px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ts-hint);
+  margin-top: var(--space-1);
+  font-size: var(--font-base);
+  line-height: var(--line-base);
+  color: var(--text-2);
 }
 
 .search {
-  margin-top: 8px;
+  margin-top: var(--space-3);
 }
 
 .count {
@@ -36,87 +33,18 @@
   composes: list from "../../styles/list.module.css";
 }
 
-.card {
-  background: var(--ts-card);
-  border-radius: var(--ts-radius-card);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.card:active {
-  transform: scale(0.985);
-}
-
 .title {
-  padding: 10px 14px 9px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-  text-align: center;
+  composes: title from "../../components/BagCard.module.css";
 }
 
 .sub {
-  padding: 0 14px 9px;
-  font-size: 12.5px;
-  line-height: 1.35;
-  text-align: center;
-  color: var(--ts-hint);
-  /* The check keeps its own colour - it is the second axis and has to be readable on
-     its own - but yields to the title above it. Both being red at full strength read
-     as one smeared line instead of two answers. */
-  opacity: 0.75;
+  composes: sub from "../../components/BagCard.module.css";
 }
 
-.code {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--ts-seg);
-  color: var(--ts-hint);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  vertical-align: 1px;
+.rows {
+  composes: rows from "../../components/BagCard.module.css";
 }
 
 .link {
-  composes: linkCompact from "../../components/ExplorerAddressRow.module.css";
-}
-
-.skeleton {
-  composes: pulse from "../../styles/anim.module.css";
-  composes: card;
-  cursor: default;
-}
-
-.skRow {
-  composes: compact from "../../components/FieldRow.module.css";
-  composes: divider from "../../components/FieldRow.module.css";
-  min-height: 34px;
-}
-
-.skRowCopy {
-  composes: skRow;
-  min-height: 38px;
-}
-
-.skTitle,
-.skBar {
-  display: inline-block;
-  vertical-align: middle;
-  height: 14px;
-  border-radius: 6px;
-  background: var(--ts-seg);
-}
-
-.skTitle {
-  width: 42%;
-}
-
-.skSub {
-  composes: skTitle;
-  width: 54%;
-  height: 13px;
+  composes: link from "../../components/BagCard.module.css";
 }

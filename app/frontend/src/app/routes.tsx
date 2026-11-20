@@ -1,8 +1,8 @@
 import { MenuSheet } from "@/components/MenuSheet";
+import { pubkeyFrom } from "@myton/ui/domain";
 import { bindSettingsButton, getStartParam } from "@/lib/telegram";
 import { Alerts } from "@/screens/Alerts/Alerts";
 import { BagExplorer } from "@/screens/BagExplorer/BagExplorer";
-import { FacetPicker } from "@/screens/Filters/FacetPicker";
 import { Filters } from "@/screens/Filters/Filters";
 import { Home } from "@/screens/Home/Home";
 import { ProviderBags } from "@/screens/ProviderBags/ProviderBags";
@@ -16,7 +16,6 @@ import { LayerStack } from "./layers/LayerStack";
 
 let startParamHandled = false;
 
-const PROVIDER_RE = /^(?:p_)?([0-9a-f]{64})$/i;
 const BAG_RE = /^b_(.+)$/i;
 
 function ProviderDetailRoute() {
@@ -49,9 +48,9 @@ export function AppRoutes() {
       navigate(`/bags?q=${encodeURIComponent(bag[1])}`);
       return;
     }
-    const provider = PROVIDER_RE.exec(param);
+    const provider = pubkeyFrom(param.replace(/^p_/i, ""));
     if (provider) {
-      navigate(`/provider/${provider[1].toLowerCase()}`);
+      navigate(`/provider/${provider}`);
     }
   }, [navigate]);
 
@@ -64,9 +63,6 @@ export function AppRoutes() {
       <Route path="/trusted" element={<Trusted />} />
       <Route path="/menu" element={<MenuSheet />} />
       <Route path="/filters" element={<Filters />} />
-      <Route path="/filters/location" element={<FacetPicker facet="location" />} />
-      <Route path="/filters/storageHash" element={<FacetPicker facet="storageHash" />} />
-      <Route path="/filters/providerHash" element={<FacetPicker facet="providerHash" />} />
       <Route path="/sort" element={<Sort />} />
       <Route path="/alerts" element={<Alerts />} />
       <Route path="*" element={<Navigate to="/" replace />} />
