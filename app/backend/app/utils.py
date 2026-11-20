@@ -66,7 +66,7 @@ def spaced(value: int) -> str:
 
 
 def short_key(key: str) -> str:
-    return html.escape(f"{key[:7]}...{key[-7:]}".upper())
+    return html.escape(f"{key[:6]}…{key[-6:]}".upper())
 
 
 def short_address(address: str) -> str:
