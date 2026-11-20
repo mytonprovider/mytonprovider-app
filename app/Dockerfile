@@ -2,6 +2,8 @@ FROM node:24-alpine AS frontend
 WORKDIR /build
 ARG VITE_TG_CLIENT_ID
 ENV VITE_TG_CLIENT_ID=$VITE_TG_CLIENT_ID
+ARG VITE_BOT_USERNAME
+ENV VITE_BOT_USERNAME=$VITE_BOT_USERNAME
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 COPY frontend .
