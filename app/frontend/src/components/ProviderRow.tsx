@@ -2,7 +2,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { StatusDot } from "@/components/StatusDot";
 import type { Provider } from "@/data/types";
 import { useT } from "@/i18n";
-import { SC, rankColor, tint } from "@/lib/colors";
+import { rankColor, toneText } from "@/lib/colors";
 import { EMPTY, KEY_CHARS, amount, fitKey, formatPrice, formatSpace, formatTime, freeSpaceTone, spaceFreePercent, trimDown } from "@/lib/format";
 import { describeStatus } from "@/lib/status";
 import { useCatalog } from "@/stores/catalog";
@@ -69,15 +69,8 @@ export function ProviderRow({ provider, onOpen, trailing }: ProviderRowProps) {
           </span>
         )}
         <CopyButton value={provider.pubkey} />
-        <span
-          className={styles.status}
-          style={{
-            color: status.color,
-            background: tint(status.color, 0.14),
-            boxShadow: `inset 0 0 0 1px ${tint(status.color, 0.32)}`,
-          }}
-        >
-          <StatusDot color={status.color} size={7} />
+        <span className={styles.status} data-tone={status.tone}>
+          <StatusDot color="var(--tone)" size={7} />
           {status.label}
           {status.hasRatio && <span className={styles.ratio}>{trimDown(status.ratio * 100, 0)}%</span>}
         </span>
@@ -101,7 +94,7 @@ export function ProviderRow({ provider, onOpen, trailing }: ProviderRowProps) {
           ) : (
             <>
               {t.freeLabel}{" "}
-              <b className={styles.mark} style={{ color: SC[freeSpaceTone(freePercent)] }}>
+              <b className={styles.mark} style={{ color: toneText(freeSpaceTone(freePercent)) }}>
                 {`${Math.round(freePercent)}%`}
               </b>
             </>

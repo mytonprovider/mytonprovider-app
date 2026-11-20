@@ -9,7 +9,8 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  padding: 0 16px 48px;
+  padding-bottom: 48px;
+  padding-inline: max(16px, var(--ts-column));
   scrollbar-width: none;
 }
 

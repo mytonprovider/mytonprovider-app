@@ -12,10 +12,9 @@ import { prefetchOwner, refreshOwner, useOwnerData } from "@/hooks/useOwnerData"
 import { useT } from "@/i18n";
 import type { Dict, DictStringKey } from "@/i18n/types";
 import { explorerAddressUrl } from "@/lib/address";
-import { tint } from "@/lib/colors";
 import { cx } from "@/lib/cx";
 import { EMPTY, JUST_NOW_SEC, formatTime } from "@/lib/format";
-import { filterColor } from "@/lib/status";
+import { filterTone } from "@/lib/status";
 import { Icon } from "@/components/Icon/Icon";
 import { useAlerts } from "@/stores/alerts";
 import { useAuth } from "@/stores/auth";
@@ -162,7 +161,7 @@ export function OwnerPanel({
           <Card>
             {BAG_ROWS.map(({ state, label }) => {
               const count = bags[state];
-              const color = filterColor(state);
+              const tone = filterTone(state);
               const open = () => navigate(`/provider/${pubkey}/bags?state=${state}`);
               return (
                 <div
@@ -173,7 +172,7 @@ export function OwnerPanel({
                   <span className={styles.bagsLabel}>{t[label]}</span>
                   <span className={styles.bagsTail}>
                     {count > 0 && (
-                      <span className={styles.bagsBadge} style={{ background: tint(color, 0.16), color }}>
+                      <span className={styles.bagsBadge} data-tone={tone}>
                         {count}
                       </span>
                     )}
